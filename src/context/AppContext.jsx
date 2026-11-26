@@ -1,11 +1,57 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import seedData from '../data/seed_data.json';
 import { rtdb } from '../lib/firebase';
 import { ref, onValue, set } from 'firebase/database';
 
 const AppContext = createContext();
 
+// Prefix to separate our local workspace from external production databases
+const DB_PREFIX = 'local_workspace_data';
+
 export const DEFAULT_FULFILLMENTS = [];
+
+export const DEFAULT_BANK_ACCOUNTS = [
+  { id: "acc-001", bankName: "Bank Central Asia (BCA)", accountNumber: "883-092-1120", accountHolder: "PT Asia Plastik Indonesia", type: "Operasional IDR", balance: 0, currency: "IDR", status: "Aktif", color: "#00529C", logo: "bca" },
+  { id: "acc-002", bankName: "Bank Mandiri", accountNumber: "132-00-9821034-1", accountHolder: "PT Asia Plastik Indonesia", type: "Valas USD", balance: 0, currency: "USD", status: "Aktif", color: "#003366", logo: "mandiri" },
+  { id: "acc-003", bankName: "Bank CIMB Niaga", accountNumber: "8001-4490-2100", accountHolder: "PT Asia Plastik Indonesia", type: "Payroll Karyawan", balance: 0, currency: "IDR", status: "Aktif", color: "#7A1C1C", logo: "cimb" },
+  { id: "acc-004", bankName: "Bank Rakyat Indonesia (BRI)", accountNumber: "0341-01-001928-30-4", accountHolder: "PT Asia Plastik Indonesia", type: "Escrow Tender", balance: 0, currency: "IDR", status: "Aktif", color: "#00529C", logo: "bri" }
+];
+
+export const DEFAULT_COA_ACCOUNTS = [
+  { code: "1-1001", name: "Kas Operasional", category: "Kas & Bank", balance: 0, normalBalance: 0, type: "Debit" },
+  { code: "1-1002", name: "Bank BCA Operasional (IDR)", category: "Kas & Bank", balance: 0, normalBalance: 0, type: "Debit" },
+  { code: "1-1003", name: "Bank Mandiri Valas (USD)", category: "Kas & Bank", balance: 0, normalBalance: 0, type: "Debit" },
+  { code: "1-1004", name: "Bank CIMB Niaga Payroll", category: "Kas & Bank", balance: 0, normalBalance: 0, type: "Debit" },
+  { code: "1-1005", name: "Bank BRI Escrow Pameran", category: "Kas & Bank", balance: 0, normalBalance: 0, type: "Debit" },
+  { code: "1-1101", name: "Piutang Usaha (Trade Receivables)", category: "Piutang", balance: 0, normalBalance: 0, type: "Debit" },
+  { code: "1-1201", name: "Persediaan Biji Plastik HDPE", category: "Persediaan", balance: 0, normalBalance: 0, type: "Debit" },
+  { code: "1-1202", name: "Persediaan Biji Plastik PP & PET", category: "Persediaan", balance: 0, normalBalance: 0, type: "Debit" },
+  { code: "1-1301", name: "PPN Masukan (DJP Coretax)", category: "Pajak", balance: 0, normalBalance: 0, type: "Debit" },
+  { code: "1-1401", name: "Aset Tetap - Mesin Extrusion Blow Molding", category: "Aset Tetap", balance: 0, normalBalance: 0, type: "Debit" },
+  { code: "1-1402", name: "Aset Tetap - Kendaraan Operasional", category: "Aset Tetap", balance: 0, normalBalance: 0, type: "Debit" },
+  { code: "2-2001", name: "Hutang Usaha Lokal (Trade Payables)", category: "Kewajiban", balance: 0, normalBalance: 0, type: "Kredit" },
+  { code: "2-2002", name: "Hutang Usaha Valas Impor (USD)", category: "Kewajiban", balance: 0, normalBalance: 0, type: "Kredit" },
+  { code: "2-2101", name: "PPN Keluaran Terutang", category: "Kewajiban", balance: 0, normalBalance: 0, type: "Kredit" },
+  { code: "3-3001", name: "Modal Disetor Pemilik", category: "Ekuitas", balance: 0, normalBalance: 0, type: "Kredit" },
+  { code: "3-3002", name: "Laba Ditahan (Retained Earnings)", category: "Ekuitas", balance: 0, normalBalance: 0, type: "Kredit" },
+  { code: "4-4001", name: "Pendapatan Penjualan Produk Plastik", category: "Pendapatan", balance: 0, normalBalance: 0, type: "Kredit" },
+  { code: "5-5001", name: "Beban Pokok Penjualan (HPP)", category: "Beban Pokok Penjualan", balance: 0, normalBalance: 0, type: "Debit" },
+  { code: "6-6001", name: "Beban Promosi & Pameran Industri", category: "Beban", balance: 0, normalBalance: 0, type: "Debit" },
+  { code: "6-6002", name: "Beban Freight & EMKL Logistik Impor", category: "Beban", balance: 0, normalBalance: 0, type: "Debit" },
+  { code: "6-6003", name: "Beban Listrik & Utilitas Pabrik", category: "Beban", balance: 0, normalBalance: 0, type: "Debit" },
+  { code: "6-6004", name: "Beban Gaji & Upah Karyawan", category: "Beban", balance: 0, normalBalance: 0, type: "Debit" }
+];
+
+const loadLocal = (key, fallback) => {
+  try {
+    const item = localStorage.getItem(`asia_plastic_${key}`);
+    if (item !== null) {
+      return JSON.parse(item);
+    }
+  } catch (e) {
+    console.warn(`[Local load error] ${key}:`, e);
+  }
+  return fallback;
+};
 
 export function AppProvider({ children }) {
   const [entityId, setEntityId] = useState('utama');
@@ -22,201 +68,200 @@ export function AppProvider({ children }) {
     { id: 'holding', name: 'Asia Plastik Konsolidasi (Holding)', code: 'AP-HLD', city: 'Jakarta' }
   ];
 
-  // Master Data initialized from extracted seed data
-  const [bankAccounts, setBankAccounts] = useState(() => seedData.Y || []);
-  const [salesDocs, setSalesDocs] = useState(() => seedData.q || []);
-  const [purchaseDocs, setPurchaseDocs] = useState(() => seedData.$ || []);
-  const [expenses, setExpenses] = useState(() => seedData.x || []);
-  const [bankMutations, setBankMutations] = useState(() => seedData.M || []);
-  const [budgetRows, setBudgetRows] = useState(() => seedData.r || []);
-  const [products, setProducts] = useState(() => (seedData.z && seedData.z.length > 0 ? seedData.z : seedData.w) || []);
-  const [vendors, setVendors] = useState(() => seedData._ || []);
-  const [workOrders, setWorkOrders] = useState(() => seedData.t || []);
-  const [taxRecords, setTaxRecords] = useState(() => seedData.s || []);
-  const [coaAccounts, setCoaAccounts] = useState(() => seedData.j || []);
-  const [personalNotes, setPersonalNotes] = useState(() => seedData.H || []);
-  const [bankRules, setBankRules] = useState(() => seedData.J || []);
-  const [giroDocs, setGiroDocs] = useState(() => seedData.o || []);
-  const [journalEntries, setJournalEntries] = useState([]);
-  const [fixedAssets, setFixedAssets] = useState(() => seedData.O || []);
-  const [closingHistory, setClosingHistory] = useState(() => seedData.u || []);
-  const [auditLogs, setAuditLogs] = useState([]);
-  const [customPopups, setCustomPopups] = useState([]);
-  const [fulfillments, setFulfillments] = useState(() => DEFAULT_FULFILLMENTS);
+  // Clean data initialized empty for user to input from scratch
+  const [bankAccounts, setBankAccounts] = useState(() => loadLocal('bank_accounts', DEFAULT_BANK_ACCOUNTS));
+  const [salesDocs, setSalesDocs] = useState(() => loadLocal('sales_docs', []));
+  const [purchaseDocs, setPurchaseDocs] = useState(() => loadLocal('purchase_docs', []));
+  const [expenses, setExpenses] = useState(() => loadLocal('expenses', []));
+  const [bankMutations, setBankMutations] = useState(() => loadLocal('bank_mutations', []));
+  const [budgetRows, setBudgetRows] = useState(() => loadLocal('budget_rows', []));
+  const [products, setProducts] = useState(() => loadLocal('products', []));
+  const [vendors, setVendors] = useState(() => loadLocal('vendors', []));
+  const [workOrders, setWorkOrders] = useState(() => loadLocal('work_orders', []));
+  const [taxRecords, setTaxRecords] = useState(() => loadLocal('tax_records', []));
+  const [coaAccounts, setCoaAccounts] = useState(() => loadLocal('coa_accounts', DEFAULT_COA_ACCOUNTS));
+  const [personalNotes, setPersonalNotes] = useState(() => loadLocal('personal_notes', []));
+  const [bankRules, setBankRules] = useState(() => loadLocal('bank_rules', []));
+  const [giroDocs, setGiroDocs] = useState(() => loadLocal('giro_docs', []));
+  const [journalEntries, setJournalEntries] = useState(() => loadLocal('journal_entries', []));
+  const [fixedAssets, setFixedAssets] = useState(() => loadLocal('fixed_assets', []));
+  const [closingHistory, setClosingHistory] = useState(() => loadLocal('closing_history', []));
+  const [auditLogs, setAuditLogs] = useState(() => loadLocal('audit_logs', []));
+  const [customPopups, setCustomPopups] = useState(() => loadLocal('custom_popups', []));
+  const [fulfillments, setFulfillments] = useState(() => loadLocal('fulfillments', DEFAULT_FULFILLMENTS));
 
-  // Helper to persist collection changes to Firebase RTDB finance_data/
-  const syncToRtdb = useCallback((key, data) => {
+  // Helper to persist collection changes locally and to isolated RTDB path
+  const syncToStorage = useCallback((key, data) => {
     try {
-      const targetRef = ref(rtdb, `finance_data/${key}`);
+      localStorage.setItem(`asia_plastic_${key}`, JSON.stringify(data));
+      const targetRef = ref(rtdb, `${DB_PREFIX}/${key}`);
       const payload = Array.isArray(data) && data.length === 0 ? { __empty__: true } : data;
-      set(targetRef, payload).catch((err) => {
-        console.warn(`[RTDB Sync Error] ${key}:`, err);
-      });
+      set(targetRef, payload).catch(() => {});
     } catch (e) {
-      console.warn(`[RTDB Write Failed] ${key}:`, e);
+      console.warn(`[Storage sync error] ${key}:`, e);
     }
   }, []);
 
-  // Setters wrapped with live RTDB synchronization
+  // Setters wrapped with persistence
   const updateBankAccounts = useCallback((val) => {
     setBankAccounts((prev) => {
       const next = typeof val === 'function' ? val(prev) : val;
-      syncToRtdb('bank_accounts', next);
+      syncToStorage('bank_accounts', next);
       return next;
     });
-  }, [syncToRtdb]);
+  }, [syncToStorage]);
 
   const updateSalesDocs = useCallback((val) => {
     setSalesDocs((prev) => {
       const next = typeof val === 'function' ? val(prev) : val;
-      syncToRtdb('sales_docs', next);
+      syncToStorage('sales_docs', next);
       return next;
     });
-  }, [syncToRtdb]);
+  }, [syncToStorage]);
 
   const updatePurchaseDocs = useCallback((val) => {
     setPurchaseDocs((prev) => {
       const next = typeof val === 'function' ? val(prev) : val;
-      syncToRtdb('purchase_docs', next);
+      syncToStorage('purchase_docs', next);
       return next;
     });
-  }, [syncToRtdb]);
+  }, [syncToStorage]);
 
   const updateExpenses = useCallback((val) => {
     setExpenses((prev) => {
       const next = typeof val === 'function' ? val(prev) : val;
-      syncToRtdb('expenses', next);
+      syncToStorage('expenses', next);
       return next;
     });
-  }, [syncToRtdb]);
+  }, [syncToStorage]);
 
   const updateBankMutations = useCallback((val) => {
     setBankMutations((prev) => {
       const next = typeof val === 'function' ? val(prev) : val;
-      syncToRtdb('bank_mutations', next);
+      syncToStorage('bank_mutations', next);
       return next;
     });
-  }, [syncToRtdb]);
+  }, [syncToStorage]);
 
   const updateBudgetRows = useCallback((val) => {
     setBudgetRows((prev) => {
       const next = typeof val === 'function' ? val(prev) : val;
-      syncToRtdb('budget_rows', next);
+      syncToStorage('budget_rows', next);
       return next;
     });
-  }, [syncToRtdb]);
+  }, [syncToStorage]);
 
   const updateProducts = useCallback((val) => {
     setProducts((prev) => {
       const next = typeof val === 'function' ? val(prev) : val;
-      syncToRtdb('products', next);
+      syncToStorage('products', next);
       return next;
     });
-  }, [syncToRtdb]);
+  }, [syncToStorage]);
 
   const updateVendors = useCallback((val) => {
     setVendors((prev) => {
       const next = typeof val === 'function' ? val(prev) : val;
-      syncToRtdb('vendors', next);
+      syncToStorage('vendors', next);
       return next;
     });
-  }, [syncToRtdb]);
+  }, [syncToStorage]);
 
   const updateWorkOrders = useCallback((val) => {
     setWorkOrders((prev) => {
       const next = typeof val === 'function' ? val(prev) : val;
-      syncToRtdb('work_orders', next);
+      syncToStorage('work_orders', next);
       return next;
     });
-  }, [syncToRtdb]);
+  }, [syncToStorage]);
 
   const updateTaxRecords = useCallback((val) => {
     setTaxRecords((prev) => {
       const next = typeof val === 'function' ? val(prev) : val;
-      syncToRtdb('tax_records', next);
+      syncToStorage('tax_records', next);
       return next;
     });
-  }, [syncToRtdb]);
+  }, [syncToStorage]);
 
   const updateCoaAccounts = useCallback((val) => {
     setCoaAccounts((prev) => {
       const next = typeof val === 'function' ? val(prev) : val;
-      syncToRtdb('coa_accounts', next);
+      syncToStorage('coa_accounts', next);
       return next;
     });
-  }, [syncToRtdb]);
+  }, [syncToStorage]);
 
   const updatePersonalNotes = useCallback((val) => {
     setPersonalNotes((prev) => {
       const next = typeof val === 'function' ? val(prev) : val;
-      syncToRtdb('personal_notes', next);
+      syncToStorage('personal_notes', next);
       return next;
     });
-  }, [syncToRtdb]);
+  }, [syncToStorage]);
 
   const updateBankRules = useCallback((val) => {
     setBankRules((prev) => {
       const next = typeof val === 'function' ? val(prev) : val;
-      syncToRtdb('bank_rules', next);
+      syncToStorage('bank_rules', next);
       return next;
     });
-  }, [syncToRtdb]);
+  }, [syncToStorage]);
 
   const updateGiroDocs = useCallback((val) => {
     setGiroDocs((prev) => {
       const next = typeof val === 'function' ? val(prev) : val;
-      syncToRtdb('giro_docs', next);
+      syncToStorage('giro_docs', next);
       return next;
     });
-  }, [syncToRtdb]);
+  }, [syncToStorage]);
 
   const updateAuditLogs = useCallback((val) => {
     setAuditLogs((prev) => {
       const next = typeof val === 'function' ? val(prev) : val;
-      syncToRtdb('audit_logs', next);
+      syncToStorage('audit_logs', next);
       return next;
     });
-  }, [syncToRtdb]);
+  }, [syncToStorage]);
 
   const updateJournalEntries = useCallback((val) => {
     setJournalEntries((prev) => {
       const next = typeof val === 'function' ? val(prev) : val;
-      syncToRtdb('journal_entries', next);
+      syncToStorage('journal_entries', next);
       return next;
     });
-  }, [syncToRtdb]);
+  }, [syncToStorage]);
 
   const updateFixedAssets = useCallback((val) => {
     setFixedAssets((prev) => {
       const next = typeof val === 'function' ? val(prev) : val;
-      syncToRtdb('fixed_assets', next);
+      syncToStorage('fixed_assets', next);
       return next;
     });
-  }, [syncToRtdb]);
+  }, [syncToStorage]);
 
   const updateClosingHistory = useCallback((val) => {
     setClosingHistory((prev) => {
       const next = typeof val === 'function' ? val(prev) : val;
-      syncToRtdb('closing_history', next);
+      syncToStorage('closing_history', next);
       return next;
     });
-  }, [syncToRtdb]);
+  }, [syncToStorage]);
 
   const updateFulfillments = useCallback((val) => {
     setFulfillments((prev) => {
       const next = typeof val === 'function' ? val(prev) : val;
-      syncToRtdb('fulfillments', next);
+      syncToStorage('fulfillments', next);
       return next;
     });
-  }, [syncToRtdb]);
+  }, [syncToStorage]);
 
-  // Two-way Realtime Database Listener for all finance_data collections
+  // Two-way listener using isolated local_workspace_data path
   useEffect(() => {
     const unsubscribers = [];
 
     const bindCollection = (key, setter, fallbackData) => {
       try {
-        const itemRef = ref(rtdb, `finance_data/${key}`);
+        const itemRef = ref(rtdb, `${DB_PREFIX}/${key}`);
         const unsub = onValue(
           itemRef,
           (snapshot) => {
@@ -230,7 +275,7 @@ export function AppProvider({ children }) {
               } else if (val && typeof val === 'object') {
                 setter(Object.values(val));
               }
-            } else if (fallbackData) {
+            } else if (fallbackData !== undefined) {
               setter(fallbackData);
             }
           },
@@ -245,24 +290,23 @@ export function AppProvider({ children }) {
       }
     };
 
-    // Attach listeners matching live database architecture
-    bindCollection('bank_accounts', setBankAccounts, seedData.Y);
-    bindCollection('sales_docs', setSalesDocs, seedData.q);
-    bindCollection('purchase_docs', setPurchaseDocs, seedData.$);
-    bindCollection('expenses', setExpenses, seedData.x);
-    bindCollection('bank_mutations', setBankMutations, seedData.M);
-    bindCollection('budget_rows', setBudgetRows, seedData.r);
-    bindCollection('products', setProducts, seedData.w);
-    bindCollection('vendors', setVendors, seedData._);
-    bindCollection('work_orders', setWorkOrders, seedData.t);
-    bindCollection('tax_records', setTaxRecords, seedData.s);
-    bindCollection('coa_accounts', setCoaAccounts, seedData.j);
-    bindCollection('personal_notes', setPersonalNotes, seedData.H);
-    bindCollection('bank_rules', setBankRules, seedData.J);
-    bindCollection('giro_docs', setGiroDocs, seedData.o);
+    bindCollection('bank_accounts', setBankAccounts, DEFAULT_BANK_ACCOUNTS);
+    bindCollection('sales_docs', setSalesDocs, []);
+    bindCollection('purchase_docs', setPurchaseDocs, []);
+    bindCollection('expenses', setExpenses, []);
+    bindCollection('bank_mutations', setBankMutations, []);
+    bindCollection('budget_rows', setBudgetRows, []);
+    bindCollection('products', setProducts, []);
+    bindCollection('vendors', setVendors, []);
+    bindCollection('work_orders', setWorkOrders, []);
+    bindCollection('tax_records', setTaxRecords, []);
+    bindCollection('coa_accounts', setCoaAccounts, DEFAULT_COA_ACCOUNTS);
+    bindCollection('personal_notes', setPersonalNotes, []);
+    bindCollection('bank_rules', setBankRules, []);
+    bindCollection('giro_docs', setGiroDocs, []);
     bindCollection('journal_entries', setJournalEntries, []);
     bindCollection('fixed_assets', setFixedAssets, []);
-    bindCollection('closing_history', setClosingHistory, seedData.u);
+    bindCollection('closing_history', setClosingHistory, []);
     bindCollection('audit_logs', setAuditLogs, []);
     bindCollection('custom_popups', setCustomPopups, []);
     bindCollection('fulfillments', setFulfillments, DEFAULT_FULFILLMENTS);
@@ -325,7 +369,7 @@ export function AppProvider({ children }) {
       notify,
       confirmAction,
       rtdbConnected,
-      syncToRtdb,
+      syncToRtdb: syncToStorage,
       bankAccounts,
       setBankAccounts: updateBankAccounts,
       salesDocs,
@@ -408,5 +452,9 @@ export function AppProvider({ children }) {
 }
 
 export function useAppContext() {
-  return useContext(AppContext);
+  const context = useContext(AppContext);
+  if (!context) {
+    throw new Error('useAppContext must be used within an AppProvider');
+  }
+  return context;
 }
