@@ -3,6 +3,7 @@ import { Outlet } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import Header from './Header';
 import CommandPalette from './CommandPalette';
+import AnnouncementModal from './AnnouncementModal';
 import { useAuth } from '../context/AuthContext';
 import LoginModal from './LoginModal';
 
@@ -30,6 +31,9 @@ export default function Layout() {
 
       {/* Command Palette Search Modal */}
       <CommandPalette />
+
+      {/* System Announcement / Notification Popup */}
+      <AnnouncementModal />
     </div>
   );
 }
