@@ -19,12 +19,15 @@ import {
   BookOpen,
   Settings,
   HelpCircle,
-  ChevronRight
+  ChevronRight,
+  LogOut
 } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
+import { useAuth } from '../context/AuthContext';
 
 export default function Sidebar({ isOpen, onClose }) {
   const { salesDocs, purchaseDocs, bankMutations, personalNotes } = useAppContext();
+  const { user, logout } = useAuth();
 
   // Navigation Items exactly matching the target application
   const navigation = [
@@ -84,7 +87,7 @@ export default function Sidebar({ isOpen, onClose }) {
           </div>
           <div className="flex flex-col">
             <span className="text-sm font-bold tracking-tight text-slate-900 leading-none">Asia Plastik</span>
-            <span className="text-[10px] text-slate-400 mt-1 font-medium">Sistem Finansial & Akuntansi</span>
+            <span className="text-[10px] text-slate-400 mt-1 font-semibold tracking-wider">FINANCE</span>
           </div>
         </div>
 
@@ -143,8 +146,35 @@ export default function Sidebar({ isOpen, onClose }) {
           ))}
         </div>
 
+        {/* User Profile Footer Card */}
+        <div className="border-t border-slate-100 p-3 bg-white">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2.5">
+              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-950 font-bold text-white text-xs shadow-xs">
+                {user?.displayName ? user.displayName.charAt(0).toUpperCase() : 'K'}
+              </div>
+              <div className="flex flex-col">
+                <span className="text-xs font-bold text-slate-900 leading-tight">
+                  {user?.displayName || 'Kevina'}
+                </span>
+                <span className="text-[10px] text-slate-400 font-medium leading-tight">
+                  {user?.role || 'Owner'}
+                </span>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={logout}
+              title="Keluar dari Workspace"
+              className="rounded-lg p-1.5 text-slate-400 hover:text-rose-600 hover:bg-slate-100 transition-colors"
+            >
+              <LogOut className="h-4 w-4" />
+            </button>
+          </div>
+        </div>
+
         {/* RTDB & Status Bar */}
-        <div className="border-t border-slate-100 p-3.5 bg-slate-50/50">
+        <div className="border-t border-slate-100 px-3.5 py-2.5 bg-slate-50/50">
           <div className="flex items-center justify-between text-[11px] text-slate-500">
             <div className="flex items-center gap-2">
               <span className="relative flex h-2 w-2">

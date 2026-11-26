@@ -13,7 +13,8 @@ import {
   Shield,
   Menu,
   CheckCircle2,
-  Clock
+  Clock,
+  Inbox
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
@@ -48,7 +49,7 @@ export default function Header({ onMenuClick }) {
 
   return (
     <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-slate-200/80 bg-white/80 px-4 backdrop-blur-md sm:px-6">
-      {/* Left: Mobile Toggle & Selectors */}
+      {/* Left: Mobile Toggle & Global Search */}
       <div className="flex items-center gap-3">
         <button
           type="button"
@@ -58,68 +59,27 @@ export default function Header({ onMenuClick }) {
           <Menu className="h-5 w-5" />
         </button>
 
-        {/* Entity Selector */}
-        <div className="relative">
-          <select
-            value={entityId}
-            onChange={(e) => {
-              setEntityId(e.target.value);
-              notify(`Beralih entitas ke: ${entities.find(x => x.id === e.target.value)?.name}`);
-            }}
-            className="flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50/80 px-3 py-1.5 text-xs font-semibold text-slate-800 shadow-2xs hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
-          >
-            {entities.map(e => (
-              <option key={e.id} value={e.id}>
-                🏢 {e.name}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        {/* Period Selector */}
-        <div className="relative hidden sm:block">
-          <select
-            value={period}
-            onChange={(e) => {
-              setPeriod(e.target.value);
-              notify(`Periode pembukuan aktif: ${e.target.value}`);
-            }}
-            className="flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50/80 px-3 py-1.5 text-xs font-semibold text-slate-800 shadow-2xs hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
-          >
-            {periods.map(p => (
-              <option key={p} value={p}>
-                📅 {p}
-              </option>
-            ))}
-          </select>
+        {/* Global Search Input Trigger */}
+        <div
+          onClick={() => setSearchOpen(true)}
+          className="flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50/90 px-3.5 py-1.5 text-xs text-slate-400 hover:border-slate-300 hover:text-slate-600 transition-colors w-72 sm:w-96 cursor-pointer shadow-2xs"
+        >
+          <Search className="h-3.5 w-3.5 text-slate-400 shrink-0" />
+          <span className="truncate">Cari transaksi, vendor, setting, rekening... (Ctrl K)</span>
         </div>
       </div>
 
       {/* Right Actions */}
       <div className="flex items-center gap-2 sm:gap-3">
-        {/* Search trigger */}
-        <button
-          type="button"
-          onClick={() => setSearchOpen(true)}
-          className="flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50/80 px-3 py-1.5 text-xs text-slate-400 hover:border-slate-300 hover:text-slate-600 transition-colors"
-        >
-          <Search className="h-3.5 w-3.5 text-slate-400" />
-          <span className="hidden sm:inline">Cari transaksi, invoice, CoA...</span>
-          <kbd className="hidden rounded bg-white px-1.5 py-0.5 text-[10px] font-semibold text-slate-500 shadow-xs sm:inline">
-            ⌘K
-          </kbd>
-        </button>
-
-        {/* Quick New Button */}
+        {/* Quick New Transaction Button */}
         <div className="relative">
           <button
             type="button"
             onClick={() => setShowNewMenu(!showNewMenu)}
-            className="flex items-center gap-1.5 rounded-xl bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-blue-700 active:scale-95 transition-all"
+            className="flex items-center gap-1.5 rounded-xl bg-blue-600 px-3.5 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-blue-700 active:scale-95 transition-all"
           >
             <Plus className="h-3.5 w-3.5 stroke-[2.5]" />
-            <span className="hidden sm:inline">Transaksi Baru</span>
-            <ChevronDown className="h-3 w-3 opacity-70" />
+            <span>+ Add Transactions</span>
           </button>
 
           {showNewMenu && (
@@ -143,6 +103,16 @@ export default function Header({ onMenuClick }) {
             </div>
           )}
         </div>
+
+        {/* Inbox / Tray */}
+        <button
+          type="button"
+          onClick={() => notify('Semua dokumen transaksi telah sinkron.')}
+          className="rounded-xl p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-900 transition-colors"
+          title="Sinkronisasi Dokumen"
+        >
+          <Inbox className="h-4 w-4" />
+        </button>
 
         {/* Notifications */}
         <div className="relative">
@@ -184,10 +154,10 @@ export default function Header({ onMenuClick }) {
             className="flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50/80 p-1 pl-2 sm:pr-3 text-left hover:bg-slate-100 transition-colors"
           >
             <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-600 font-bold text-white text-xs">
-              {user?.displayName ? user.displayName.charAt(0) : 'C'}
+              {user?.displayName ? user.displayName.charAt(0).toUpperCase() : 'K'}
             </div>
             <div className="hidden sm:block">
-              <div className="text-xs font-bold text-slate-900 leading-tight">{user?.displayName || 'Carlos Susanto'}</div>
+              <div className="text-xs font-bold text-slate-900 leading-tight">{user?.displayName || 'Kevina'}</div>
               <div className="text-[10px] font-semibold text-blue-600 leading-tight flex items-center gap-1">
                 <Shield className="h-2.5 w-2.5" />
                 {user?.role || 'Owner'}
@@ -199,7 +169,7 @@ export default function Header({ onMenuClick }) {
           {showProfile && (
             <div className="absolute right-0 mt-2 w-64 rounded-2xl border border-slate-100 bg-white p-2 shadow-2xl animate-fade-in z-50">
               <div className="px-3 py-2 border-b border-slate-100">
-                <div className="text-xs font-bold text-slate-900">{user?.displayName || 'Carlos Susanto'}</div>
+                <div className="text-xs font-bold text-slate-900">{user?.displayName || 'Kevina'}</div>
                 <div className="text-[11px] text-slate-400 truncate">{user?.email || 'carlossusanto89@gmail.com'}</div>
                 <div className="mt-1.5 inline-flex items-center gap-1 rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-bold text-blue-700">
                   <Shield className="h-2.5 w-2.5" />
