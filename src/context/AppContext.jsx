@@ -119,6 +119,7 @@ export function AppProvider({ children }) {
   const [giroDocs, setGiroDocs] = useState(() => seedData.o || []);
   const [journalEntries, setJournalEntries] = useState([]);
   const [fixedAssets, setFixedAssets] = useState(() => seedData.O || []);
+  const [closingHistory, setClosingHistory] = useState(() => seedData.u || []);
   const [auditLogs, setAuditLogs] = useState([]);
   const [customPopups, setCustomPopups] = useState([]);
   const [fulfillments, setFulfillments] = useState(() => DEFAULT_FULFILLMENTS);
@@ -257,6 +258,30 @@ export function AppProvider({ children }) {
     });
   }, [syncToRtdb]);
 
+  const updateJournalEntries = useCallback((val) => {
+    setJournalEntries((prev) => {
+      const next = typeof val === 'function' ? val(prev) : val;
+      syncToRtdb('journal_entries', next);
+      return next;
+    });
+  }, [syncToRtdb]);
+
+  const updateFixedAssets = useCallback((val) => {
+    setFixedAssets((prev) => {
+      const next = typeof val === 'function' ? val(prev) : val;
+      syncToRtdb('fixed_assets', next);
+      return next;
+    });
+  }, [syncToRtdb]);
+
+  const updateClosingHistory = useCallback((val) => {
+    setClosingHistory((prev) => {
+      const next = typeof val === 'function' ? val(prev) : val;
+      syncToRtdb('closing_history', next);
+      return next;
+    });
+  }, [syncToRtdb]);
+
   const updateFulfillments = useCallback((val) => {
     setFulfillments((prev) => {
       const next = typeof val === 'function' ? val(prev) : val;
@@ -317,6 +342,7 @@ export function AppProvider({ children }) {
     bindCollection('giro_docs', setGiroDocs, seedData.o);
     bindCollection('journal_entries', setJournalEntries, []);
     bindCollection('fixed_assets', setFixedAssets, []);
+    bindCollection('closing_history', setClosingHistory, seedData.u);
     bindCollection('audit_logs', setAuditLogs, []);
     bindCollection('custom_popups', setCustomPopups, []);
     bindCollection('fulfillments', setFulfillments, DEFAULT_FULFILLMENTS);
@@ -409,7 +435,11 @@ export function AppProvider({ children }) {
       giroDocs,
       setGiroDocs: updateGiroDocs,
       journalEntries,
+      setJournalEntries: updateJournalEntries,
       fixedAssets,
+      setFixedAssets: updateFixedAssets,
+      closingHistory,
+      setClosingHistory: updateClosingHistory,
       auditLogs,
       setAuditLogs: updateAuditLogs,
       fulfillments,
