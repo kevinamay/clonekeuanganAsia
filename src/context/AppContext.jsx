@@ -166,6 +166,14 @@ export function AppProvider({ children }) {
     });
   }, [syncToRtdb]);
 
+  const updateAuditLogs = useCallback((val) => {
+    setAuditLogs((prev) => {
+      const next = typeof val === 'function' ? val(prev) : val;
+      syncToRtdb('audit_logs', next);
+      return next;
+    });
+  }, [syncToRtdb]);
+
   // Two-way Realtime Database Listener for all finance_data collections
   useEffect(() => {
     const unsubscribers = [];
@@ -311,6 +319,7 @@ export function AppProvider({ children }) {
       journalEntries,
       fixedAssets,
       auditLogs,
+      setAuditLogs: updateAuditLogs,
       customPopups
     }}>
       {children}
