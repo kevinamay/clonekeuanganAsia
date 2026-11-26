@@ -10,7 +10,7 @@ const firebaseConfig = {
   storageBucket: "financeasia-47f36.firebasestorage.app",
   messagingSenderId: "400730736049",
   appId: "1:400730736049:web:230265b434593d5a5da990",
-  databaseURL: "https://financeasia-47f36-default-rtdb.asia-southeast1.firebasedatabase.app"
+  databaseURL: "https://financeasia-47f36-default-rtdb.firebaseio.com"
 };
 
 const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
