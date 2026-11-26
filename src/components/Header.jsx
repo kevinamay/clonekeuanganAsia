@@ -71,6 +71,48 @@ export default function Header({ onMenuClick }) {
 
       {/* Right Actions */}
       <div className="flex items-center gap-2 sm:gap-3">
+        {/* Notifications */}
+        <div className="relative">
+          <button
+            type="button"
+            onClick={() => setShowNotifications(!showNotifications)}
+            className="relative rounded-xl p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-900 transition-colors"
+          >
+            <Bell className="h-4 w-4" />
+            <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-rose-500 ring-2 ring-white" />
+          </button>
+
+          {showNotifications && (
+            <div className="absolute right-0 mt-2 w-80 rounded-2xl border border-slate-100 bg-white p-2 shadow-2xl animate-fade-in z-50">
+              <div className="flex items-center justify-between px-3 py-2 border-b border-slate-100">
+                <span className="text-xs font-bold text-slate-900">Notifikasi Finansial</span>
+                <span className="text-[10px] text-blue-600 hover:underline cursor-pointer">Tandai Dibaca</span>
+              </div>
+              <div className="divide-y divide-slate-50 py-1">
+                {notifications.map((n) => (
+                  <div key={n.id} className="p-2.5 hover:bg-slate-50 rounded-xl transition-colors cursor-pointer">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-semibold text-slate-900">{n.title}</span>
+                      <span className="text-[10px] text-slate-400">{n.time}</span>
+                    </div>
+                    <p className="text-[11px] text-slate-500 mt-0.5 line-clamp-1">{n.desc}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Inbox / Tray */}
+        <button
+          type="button"
+          onClick={() => notify('Semua dokumen transaksi telah sinkron.')}
+          className="rounded-xl p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-900 transition-colors"
+          title="Sinkronisasi Dokumen"
+        >
+          <Inbox className="h-4 w-4" />
+        </button>
+
         {/* Quick New Transaction Button */}
         <div className="relative">
           <button
@@ -100,119 +142,6 @@ export default function Header({ onMenuClick }) {
                   {qa.label}
                 </button>
               ))}
-            </div>
-          )}
-        </div>
-
-        {/* Inbox / Tray */}
-        <button
-          type="button"
-          onClick={() => notify('Semua dokumen transaksi telah sinkron.')}
-          className="rounded-xl p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-900 transition-colors"
-          title="Sinkronisasi Dokumen"
-        >
-          <Inbox className="h-4 w-4" />
-        </button>
-
-        {/* Notifications */}
-        <div className="relative">
-          <button
-            type="button"
-            onClick={() => setShowNotifications(!showNotifications)}
-            className="relative rounded-xl p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-900"
-          >
-            <Bell className="h-4 w-4" />
-            <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-rose-500 ring-2 ring-white" />
-          </button>
-
-          {showNotifications && (
-            <div className="absolute right-0 mt-2 w-80 rounded-2xl border border-slate-100 bg-white p-2 shadow-2xl animate-fade-in z-50">
-              <div className="flex items-center justify-between px-3 py-2 border-b border-slate-100">
-                <span className="text-xs font-bold text-slate-900">Notifikasi Finansial</span>
-                <span className="text-[10px] text-blue-600 hover:underline cursor-pointer">Tandai Dibaca</span>
-              </div>
-              <div className="divide-y divide-slate-50 py-1">
-                {notifications.map((n) => (
-                  <div key={n.id} className="p-2.5 hover:bg-slate-50 rounded-xl transition-colors cursor-pointer">
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-semibold text-slate-900">{n.title}</span>
-                      <span className="text-[10px] text-slate-400">{n.time}</span>
-                    </div>
-                    <p className="text-[11px] text-slate-500 mt-0.5 line-clamp-1">{n.desc}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* User Profile */}
-        <div className="relative">
-          <button
-            type="button"
-            onClick={() => setShowProfile(!showProfile)}
-            className="flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50/80 p-1 pl-2 sm:pr-3 text-left hover:bg-slate-100 transition-colors"
-          >
-            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-600 font-bold text-white text-xs">
-              {user?.displayName ? user.displayName.charAt(0).toUpperCase() : 'K'}
-            </div>
-            <div className="hidden sm:block">
-              <div className="text-xs font-bold text-slate-900 leading-tight">{user?.displayName || 'Kevina'}</div>
-              <div className="text-[10px] font-semibold text-blue-600 leading-tight flex items-center gap-1">
-                <Shield className="h-2.5 w-2.5" />
-                {user?.role || 'Owner'}
-              </div>
-            </div>
-            <ChevronDown className="h-3 w-3 text-slate-400 hidden sm:block" />
-          </button>
-
-          {showProfile && (
-            <div className="absolute right-0 mt-2 w-64 rounded-2xl border border-slate-100 bg-white p-2 shadow-2xl animate-fade-in z-50">
-              <div className="px-3 py-2 border-b border-slate-100">
-                <div className="text-xs font-bold text-slate-900">{user?.displayName || 'Kevina'}</div>
-                <div className="text-[11px] text-slate-400 truncate">{user?.email || 'carlossusanto89@gmail.com'}</div>
-                <div className="mt-1.5 inline-flex items-center gap-1 rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-bold text-blue-700">
-                  <Shield className="h-2.5 w-2.5" />
-                  Role: {user?.role || 'Owner'}
-                </div>
-              </div>
-
-              {/* Role switcher for testing */}
-              <div className="p-2 border-b border-slate-100">
-                <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">
-                  Simulasi Role:
-                </div>
-                {['Owner', 'Finance Manager', 'Accounting Staff', 'Restricted Banker'].map(r => (
-                  <button
-                    key={r}
-                    type="button"
-                    onClick={() => {
-                      switchRole(r);
-                      setShowProfile(false);
-                      notify(`Berganti peran menjadi: ${r}`);
-                    }}
-                    className={`w-full text-left px-2.5 py-1 text-xs rounded-lg transition-colors ${
-                      user?.role === r ? 'font-bold text-blue-700 bg-blue-50' : 'text-slate-600 hover:bg-slate-100'
-                    }`}
-                  >
-                    • {r}
-                  </button>
-                ))}
-              </div>
-
-              <div className="p-1">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowProfile(false);
-                    logout();
-                  }}
-                  className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-xs font-semibold text-rose-600 hover:bg-rose-50 transition-colors"
-                >
-                  <LogOut className="h-4 w-4" />
-                  <span>Keluar dari Workspace</span>
-                </button>
-              </div>
             </div>
           )}
         </div>

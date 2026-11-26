@@ -29,6 +29,7 @@ import {
   X,
   ExternalLink,
   Copy,
+  Share2,
   Check,
   Building,
   CheckCheck,
@@ -320,13 +321,13 @@ export default function Dashboard() {
     return `M ${pointsStr.replace(/ /g, ' L ')}`;
   };
 
-  // Recent Transfer Accounts circles
+  // Recent Transfer Accounts circles matching Image 1
   const recentAccounts = [
-    { label: 'BCA', color: 'bg-blue-600' },
-    { label: 'MDR', color: 'bg-blue-500' },
-    { label: 'BRI', color: 'bg-slate-700' },
-    { label: 'BNI', color: 'bg-blue-400' },
-    { label: 'CASH', color: 'bg-emerald-600' }
+    { label: 'BK', color: 'bg-blue-600' },
+    { label: 'KB', color: 'bg-blue-700' },
+    { label: 'MDR', color: 'bg-blue-800' },
+    { label: 'BNI', color: 'bg-slate-700' },
+    { label: '+2', color: 'bg-slate-900' }
   ];
 
   // Helper for Looker widget moving
@@ -685,7 +686,7 @@ export default function Dashboard() {
                       C
                     </div>
                     <div className="h-5 w-5 rounded-full bg-slate-800 text-white flex items-center justify-center text-[9px] font-bold ring-2 ring-white">
-                      R
+                      K
                     </div>
                   </div>
                   <button
@@ -694,9 +695,10 @@ export default function Dashboard() {
                       navigator.clipboard.writeText('https://www.youtube.com/shorts/dzD6GL4nWzA');
                       notify('Tautan disalin ke clipboard.');
                     }}
-                    className="text-slate-400 hover:text-slate-600"
+                    className="text-slate-400 hover:text-slate-600 transition-colors"
+                    title="Bagikan Catatan"
                   >
-                    <Copy className="h-3.5 w-3.5" />
+                    <Share2 className="h-3.5 w-3.5" />
                   </button>
                 </div>
               </div>
@@ -1152,6 +1154,18 @@ export default function Dashboard() {
                         <h3 className="text-sm font-bold text-slate-900 tracking-tight leading-snug">
                           {w.title}
                         </h3>
+                        {w.variable === 'sales' && (
+                          <div className="flex items-center gap-3 text-xs mt-1">
+                            <span className="flex items-center gap-1 text-[11px] font-semibold text-slate-700">
+                              <span className="h-2 w-2 rounded-full bg-blue-600 inline-block" />
+                              Penjualan
+                            </span>
+                            <span className="flex items-center gap-1 text-[11px] font-semibold text-emerald-600">
+                              <span className="h-2 w-2 rounded-full bg-emerald-500 inline-block" />
+                              Margin Bruto (24%)
+                            </span>
+                          </div>
+                        )}
                       </div>
 
                       {/* Controls */}
@@ -1190,20 +1204,37 @@ export default function Dashboard() {
                       {/* Widget 1: Line Chart (Sales & Margin) */}
                       {w.variable === 'sales' && w.chartType === 'line' && (
                         <div>
-                          <div className="relative h-36 w-full">
-                            <svg viewBox="0 0 500 120" className="w-full h-full" preserveAspectRatio="none">
+                          <div className="relative h-32 w-full pt-1">
+                            <svg viewBox="0 0 500 110" className="w-full h-full" preserveAspectRatio="none">
                               <defs>
                                 <linearGradient id="widgetSalesGrad" x1="0" y1="0" x2="0" y2="1">
-                                  <stop offset="0%" stopColor="#3B82F6" stopOpacity="0.3" />
-                                  <stop offset="100%" stopColor="#3B82F6" stopOpacity="0.0" />
+                                  <stop offset="0%" stopColor="#2563EB" stopOpacity="0.25" />
+                                  <stop offset="100%" stopColor="#2563EB" stopOpacity="0.0" />
                                 </linearGradient>
                               </defs>
-                              <path d="M 30,100 Q 150,50 250,85 T 470,25 L 470,110 L 30,110 Z" fill="url(#widgetSalesGrad)" />
-                              <path d="M 30,100 Q 150,50 250,85 T 470,25" fill="none" stroke="#2563EB" strokeWidth="2.5" />
-                              <circle cx="470" cy="25" r="4" fill="#2563EB" stroke="#FFFFFF" strokeWidth="2" />
+                              <path
+                                d="M 30,68 C 70,40 90,40 118,40 C 150,40 175,65 206,65 C 240,65 265,46 294,46 C 330,46 355,26 382,26 C 420,26 445,42 470,42 L 470,105 L 30,105 Z"
+                                fill="url(#widgetSalesGrad)"
+                              />
+                              <path
+                                d="M 30,68 C 70,40 90,40 118,40 C 150,40 175,65 206,65 C 240,65 265,46 294,46 C 330,46 355,26 382,26 C 420,26 445,42 470,42"
+                                fill="none"
+                                stroke="#2563EB"
+                                strokeWidth="2.5"
+                              />
+                              <circle cx="470" cy="42" r="3.5" fill="#2563EB" stroke="#FFFFFF" strokeWidth="2" />
                             </svg>
                           </div>
-                          <div className="flex justify-between items-center text-[10px] text-slate-400 mt-2 px-1 font-semibold">
+                          {/* Month ticks */}
+                          <div className="flex justify-between items-center text-[10px] text-slate-400 mt-1 px-3 font-medium">
+                            <span>Jul</span>
+                            <span>Aug</span>
+                            <span>Sep</span>
+                            <span>Oct</span>
+                            <span>Nov</span>
+                            <span>Dec</span>
+                          </div>
+                          <div className="flex justify-between items-center text-[10px] text-slate-400 mt-2 px-1 font-semibold border-t border-slate-50 pt-2">
                             <span>Jul: Rp 1.480.000.000</span>
                             <span className="text-blue-600 font-bold">Puncak: Rp 2.290.000.000 (Nov)</span>
                           </div>

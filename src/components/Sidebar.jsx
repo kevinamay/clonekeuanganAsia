@@ -130,12 +130,6 @@ export default function Sidebar({ isOpen, onClose }) {
                               {item.badge}
                             </span>
                           )}
-
-                          {typeof item.count === 'number' && item.count > 0 && (
-                            <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-slate-100 px-1 text-[10px] font-bold text-slate-600">
-                              {item.count}
-                            </span>
-                          )}
                         </>
                       )}
                     </NavLink>
@@ -147,7 +141,7 @@ export default function Sidebar({ isOpen, onClose }) {
         </div>
 
         {/* User Profile Footer Card */}
-        <div className="border-t border-slate-100 p-3 bg-white">
+        <div className="border-t border-slate-100 p-3.5 bg-white">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2.5">
               <div className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-950 font-bold text-white text-xs shadow-xs">
@@ -170,20 +164,6 @@ export default function Sidebar({ isOpen, onClose }) {
             >
               <LogOut className="h-4 w-4" />
             </button>
-          </div>
-        </div>
-
-        {/* RTDB & Status Bar */}
-        <div className="border-t border-slate-100 px-3.5 py-2.5 bg-slate-50/50">
-          <div className="flex items-center justify-between text-[11px] text-slate-500">
-            <div className="flex items-center gap-2">
-              <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-              </span>
-              <span className="font-medium text-slate-700">Database Terhubung</span>
-            </div>
-            <span className="text-[10px] font-mono text-slate-400">v2.6 Realtime</span>
           </div>
         </div>
       </aside>
