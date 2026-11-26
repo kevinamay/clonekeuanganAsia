@@ -9,6 +9,7 @@ import {
   UserX,
   Shield,
   ShieldAlert,
+  ShieldCheck,
   Key,
   Mail,
   Phone,
