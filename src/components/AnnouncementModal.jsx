@@ -68,7 +68,7 @@ export default function AnnouncementModal() {
   // Sync with Firebase RTDB custom_popups if configured
   useEffect(() => {
     try {
-      const popupsRef = ref(rtdb, 'custom_popups');
+      const popupsRef = ref(rtdb, 'finance_data/custom_popups');
       const unsub = onValue(popupsRef, (snap) => {
         const val = snap.val();
         if (val && typeof val === 'object') {

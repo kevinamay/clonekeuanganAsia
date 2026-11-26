@@ -1,5 +1,7 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import seedData from '../data/seed_data.json';
+import { rtdb } from '../lib/firebase';
+import { ref, onValue, set } from 'firebase/database';
 
 const AppContext = createContext();
 
@@ -9,6 +11,7 @@ export function AppProvider({ children }) {
   const [searchOpen, setSearchOpen] = useState(false);
   const [toast, setToast] = useState(null);
   const [confirmDialog, setConfirmDialog] = useState(null);
+  const [rtdbConnected, setRtdbConnected] = useState(true);
 
   // Entities list matching target:
   const entities = [
@@ -18,53 +21,196 @@ export function AppProvider({ children }) {
   ];
 
   // Master Data initialized from extracted seed data
-  const [bankAccounts, setBankAccounts] = useState(() => {
-    return seedData.Y || [];
-  });
+  const [bankAccounts, setBankAccounts] = useState(() => seedData.Y || []);
+  const [salesDocs, setSalesDocs] = useState(() => seedData.q || []);
+  const [purchaseDocs, setPurchaseDocs] = useState(() => seedData.$ || []);
+  const [expenses, setExpenses] = useState(() => seedData.x || []);
+  const [bankMutations, setBankMutations] = useState(() => seedData.M || []);
+  const [budgetRows, setBudgetRows] = useState(() => seedData.r || []);
+  const [products, setProducts] = useState(() => seedData.w || []);
+  const [vendors, setVendors] = useState(() => seedData._ || []);
+  const [workOrders, setWorkOrders] = useState(() => seedData.t || []);
+  const [taxRecords, setTaxRecords] = useState(() => seedData.s || []);
+  const [coaAccounts, setCoaAccounts] = useState(() => seedData.j || []);
+  const [personalNotes, setPersonalNotes] = useState(() => seedData.H || []);
+  const [journalEntries, setJournalEntries] = useState([]);
+  const [fixedAssets, setFixedAssets] = useState([]);
+  const [auditLogs, setAuditLogs] = useState([]);
+  const [customPopups, setCustomPopups] = useState([]);
 
-  const [salesDocs, setSalesDocs] = useState(() => {
-    return seedData.q || [];
-  });
+  // Helper to persist collection changes to Firebase RTDB finance_data/
+  const syncToRtdb = useCallback((key, data) => {
+    try {
+      const targetRef = ref(rtdb, `finance_data/${key}`);
+      const payload = Array.isArray(data) && data.length === 0 ? { __empty__: true } : data;
+      set(targetRef, payload).catch((err) => {
+        console.warn(`[RTDB Sync Error] ${key}:`, err);
+      });
+    } catch (e) {
+      console.warn(`[RTDB Write Failed] ${key}:`, e);
+    }
+  }, []);
 
-  const [purchaseDocs, setPurchaseDocs] = useState(() => {
-    return seedData.$ || [];
-  });
+  // Setters wrapped with live RTDB synchronization
+  const updateBankAccounts = useCallback((val) => {
+    setBankAccounts((prev) => {
+      const next = typeof val === 'function' ? val(prev) : val;
+      syncToRtdb('bank_accounts', next);
+      return next;
+    });
+  }, [syncToRtdb]);
 
-  const [expenses, setExpenses] = useState(() => {
-    return seedData.x || [];
-  });
+  const updateSalesDocs = useCallback((val) => {
+    setSalesDocs((prev) => {
+      const next = typeof val === 'function' ? val(prev) : val;
+      syncToRtdb('sales_docs', next);
+      return next;
+    });
+  }, [syncToRtdb]);
 
-  const [bankMutations, setBankMutations] = useState(() => {
-    return seedData.M || [];
-  });
+  const updatePurchaseDocs = useCallback((val) => {
+    setPurchaseDocs((prev) => {
+      const next = typeof val === 'function' ? val(prev) : val;
+      syncToRtdb('purchase_docs', next);
+      return next;
+    });
+  }, [syncToRtdb]);
 
-  const [budgetRows, setBudgetRows] = useState(() => {
-    return seedData.r || [];
-  });
+  const updateExpenses = useCallback((val) => {
+    setExpenses((prev) => {
+      const next = typeof val === 'function' ? val(prev) : val;
+      syncToRtdb('expenses', next);
+      return next;
+    });
+  }, [syncToRtdb]);
 
-  const [products, setProducts] = useState(() => {
-    return seedData.w || [];
-  });
+  const updateBankMutations = useCallback((val) => {
+    setBankMutations((prev) => {
+      const next = typeof val === 'function' ? val(prev) : val;
+      syncToRtdb('bank_mutations', next);
+      return next;
+    });
+  }, [syncToRtdb]);
 
-  const [vendors, setVendors] = useState(() => {
-    return seedData._ || [];
-  });
+  const updateBudgetRows = useCallback((val) => {
+    setBudgetRows((prev) => {
+      const next = typeof val === 'function' ? val(prev) : val;
+      syncToRtdb('budget_rows', next);
+      return next;
+    });
+  }, [syncToRtdb]);
 
-  const [workOrders, setWorkOrders] = useState(() => {
-    return seedData.t || [];
-  });
+  const updateProducts = useCallback((val) => {
+    setProducts((prev) => {
+      const next = typeof val === 'function' ? val(prev) : val;
+      syncToRtdb('products', next);
+      return next;
+    });
+  }, [syncToRtdb]);
 
-  const [taxRecords, setTaxRecords] = useState(() => {
-    return seedData.s || [];
-  });
+  const updateVendors = useCallback((val) => {
+    setVendors((prev) => {
+      const next = typeof val === 'function' ? val(prev) : val;
+      syncToRtdb('vendors', next);
+      return next;
+    });
+  }, [syncToRtdb]);
 
-  const [coaAccounts, setCoaAccounts] = useState(() => {
-    return seedData.j || [];
-  });
+  const updateWorkOrders = useCallback((val) => {
+    setWorkOrders((prev) => {
+      const next = typeof val === 'function' ? val(prev) : val;
+      syncToRtdb('work_orders', next);
+      return next;
+    });
+  }, [syncToRtdb]);
 
-  const [personalNotes, setPersonalNotes] = useState(() => {
-    return seedData.H || [];
-  });
+  const updateTaxRecords = useCallback((val) => {
+    setTaxRecords((prev) => {
+      const next = typeof val === 'function' ? val(prev) : val;
+      syncToRtdb('tax_records', next);
+      return next;
+    });
+  }, [syncToRtdb]);
+
+  const updateCoaAccounts = useCallback((val) => {
+    setCoaAccounts((prev) => {
+      const next = typeof val === 'function' ? val(prev) : val;
+      syncToRtdb('coa_accounts', next);
+      return next;
+    });
+  }, [syncToRtdb]);
+
+  const updatePersonalNotes = useCallback((val) => {
+    setPersonalNotes((prev) => {
+      const next = typeof val === 'function' ? val(prev) : val;
+      syncToRtdb('personal_notes', next);
+      return next;
+    });
+  }, [syncToRtdb]);
+
+  // Two-way Realtime Database Listener for all finance_data collections
+  useEffect(() => {
+    const unsubscribers = [];
+
+    const bindCollection = (key, setter, fallbackData) => {
+      try {
+        const itemRef = ref(rtdb, `finance_data/${key}`);
+        const unsub = onValue(
+          itemRef,
+          (snapshot) => {
+            setRtdbConnected(true);
+            if (snapshot.exists()) {
+              const val = snapshot.val();
+              if (val && typeof val === 'object' && val.__empty__) {
+                setter([]);
+              } else if (Array.isArray(val)) {
+                setter(val);
+              } else if (val && typeof val === 'object') {
+                setter(Object.values(val));
+              }
+            } else if (fallbackData) {
+              setter(fallbackData);
+            }
+          },
+          (err) => {
+            console.warn(`[RTDB subscribe error] ${key}:`, err);
+            setRtdbConnected(false);
+          }
+        );
+        unsubscribers.push(unsub);
+      } catch (err) {
+        console.warn(`[RTDB bind error] ${key}:`, err);
+      }
+    };
+
+    // Attach listeners matching live database architecture
+    bindCollection('bank_accounts', setBankAccounts, seedData.Y);
+    bindCollection('sales_docs', setSalesDocs, seedData.q);
+    bindCollection('purchase_docs', setPurchaseDocs, seedData.$);
+    bindCollection('expenses', setExpenses, seedData.x);
+    bindCollection('bank_mutations', setBankMutations, seedData.M);
+    bindCollection('budget_rows', setBudgetRows, seedData.r);
+    bindCollection('products', setProducts, seedData.w);
+    bindCollection('vendors', setVendors, seedData._);
+    bindCollection('work_orders', setWorkOrders, seedData.t);
+    bindCollection('tax_records', setTaxRecords, seedData.s);
+    bindCollection('coa_accounts', setCoaAccounts, seedData.j);
+    bindCollection('personal_notes', setPersonalNotes, seedData.H);
+    bindCollection('journal_entries', setJournalEntries, []);
+    bindCollection('fixed_assets', setFixedAssets, []);
+    bindCollection('audit_logs', setAuditLogs, []);
+    bindCollection('custom_popups', setCustomPopups, []);
+
+    return () => {
+      unsubscribers.forEach((unsub) => {
+        try {
+          if (typeof unsub === 'function') unsub();
+        } catch {
+          // ignore cleanup errors
+        }
+      });
+    };
+  }, []);
 
   const notify = (msg, type = 'info') => {
     setToast({ msg, type, id: Date.now() });
@@ -112,30 +258,36 @@ export function AppProvider({ children }) {
       setSearchOpen,
       notify,
       confirmAction,
+      rtdbConnected,
+      syncToRtdb,
       bankAccounts,
-      setBankAccounts,
+      setBankAccounts: updateBankAccounts,
       salesDocs,
-      setSalesDocs,
+      setSalesDocs: updateSalesDocs,
       purchaseDocs,
-      setPurchaseDocs,
+      setPurchaseDocs: updatePurchaseDocs,
       expenses,
-      setExpenses,
+      setExpenses: updateExpenses,
       bankMutations,
-      setBankMutations,
+      setBankMutations: updateBankMutations,
       budgetRows,
-      setBudgetRows,
+      setBudgetRows: updateBudgetRows,
       products,
-      setProducts,
+      setProducts: updateProducts,
       vendors,
-      setVendors,
+      setVendors: updateVendors,
       workOrders,
-      setWorkOrders,
+      setWorkOrders: updateWorkOrders,
       taxRecords,
-      setTaxRecords,
+      setTaxRecords: updateTaxRecords,
       coaAccounts,
-      setCoaAccounts,
+      setCoaAccounts: updateCoaAccounts,
       personalNotes,
-      setPersonalNotes
+      setPersonalNotes: updatePersonalNotes,
+      journalEntries,
+      fixedAssets,
+      auditLogs,
+      customPopups
     }}>
       {children}
 
