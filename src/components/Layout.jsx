@@ -17,13 +17,13 @@ export default function Layout() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50/70 flex">
-      {/* Sidebar */}
+    <div className="min-h-screen bg-slate-50/70 flex flex-col">
+      {/* Sidebar Overlay Drawer */}
       <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
-      {/* Main Content Area */}
-      <div className="flex-1 md:pl-64 flex flex-col min-w-0">
-        <Header onMenuClick={() => setSidebarOpen(true)} />
+      {/* Main Content Area: Expands full width */}
+      <div className="flex-1 flex flex-col min-w-0 transition-all duration-300">
+        <Header onMenuClick={() => setSidebarOpen(prev => !prev)} />
         <main className="flex-1 px-4 py-5 sm:px-6 lg:px-8 max-w-[1580px] w-full mx-auto">
           <Outlet />
         </main>

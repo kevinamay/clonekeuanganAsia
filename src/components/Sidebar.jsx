@@ -20,7 +20,8 @@ import {
   Settings,
   HelpCircle,
   ChevronRight,
-  LogOut
+  LogOut,
+  X
 } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
 import { useAuth } from '../context/AuthContext';
@@ -36,9 +37,9 @@ export default function Sidebar({ isOpen, onClose }) {
       items: [
         { href: '/', label: 'Dashboard', icon: LayoutDashboard },
         { href: '/ai', label: 'AI Asisten', icon: Bot, badge: 'PRO' },
-        { href: '/tugas', label: 'Tugas & Catatan', icon: CheckSquare, count: personalNotes.filter(n => !n.completed).length },
+        { href: '/tugas', label: 'Tugas & Catatan', icon: CheckSquare, count: (personalNotes || []).filter(n => !n.completed).length },
         { href: '/kas-bank', label: 'Kas & Bank', icon: Landmark },
-        { href: '/rekonsiliasi', label: 'Rekonsiliasi', icon: Scale, count: bankMutations.filter(m => m.status === 'Perlu Tinjau').length },
+        { href: '/rekonsiliasi', label: 'Rekonsiliasi', icon: Scale, count: (bankMutations || []).filter(m => m.status === 'Perlu Tinjau').length },
         { href: '/biaya-anggaran', label: 'Budgeting & Biaya', icon: PieChart },
         { href: '/laporan', label: 'Reports', icon: BarChart3 }
       ]
@@ -46,8 +47,8 @@ export default function Sidebar({ isOpen, onClose }) {
     {
       group: 'MANAGEMENT',
       items: [
-        { href: '/penjualan', label: 'Invoices & Penjualan', icon: Receipt, count: salesDocs.length },
-        { href: '/pembelian', label: 'Pembelian & Tagihan', icon: ShoppingBag, count: purchaseDocs.length },
+        { href: '/penjualan', label: 'Invoices & Penjualan', icon: Receipt, count: (salesDocs || []).length },
+        { href: '/pembelian', label: 'Pembelian & Tagihan', icon: ShoppingBag, count: (purchaseDocs || []).length },
         { href: '/pemenuhan', label: 'Pemenuhan & Logistik', icon: Truck },
         { href: '/vendor', label: 'Vendor & Pemasok', icon: Building2 },
         { href: '/inventori-produksi', label: 'Inventori & Gudang', icon: Boxes },
@@ -67,28 +68,39 @@ export default function Sidebar({ isOpen, onClose }) {
 
   return (
     <>
-      {/* Mobile overlay */}
+      {/* Backdrop overlay (dismissible on click anywhere) */}
       {isOpen && (
         <div
           onClick={onClose}
-          className="fixed inset-0 z-40 bg-black/50 backdrop-blur-xs md:hidden"
+          className="fixed inset-0 z-40 bg-slate-950/40 backdrop-blur-xs transition-opacity animate-fade-in cursor-pointer"
         />
       )}
 
+      {/* Slide-over drawer sidebar */}
       <aside
-        className={`fixed top-0 bottom-0 left-0 z-40 w-64 border-r border-slate-200/80 bg-white flex flex-col transition-transform duration-200 ease-in-out md:translate-x-0 ${
-          isOpen ? 'translate-x-0 shadow-2xl' : '-translate-x-full'
+        className={`fixed top-0 bottom-0 left-0 z-50 w-64 border-r border-slate-200/80 bg-white flex flex-col transition-transform duration-300 ease-in-out shadow-2xl ${
+          isOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
-        {/* Brand Header */}
-        <div className="flex h-16 items-center gap-3 px-5 border-b border-slate-100">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#0C4F7A] text-white shadow-xs p-1.5 shrink-0">
-            <AsiaPlastikLogo className="h-full w-full" color="#FFFFFF" />
+        {/* Brand Header with Close button */}
+        <div className="flex h-16 items-center justify-between px-5 border-b border-slate-100">
+          <div className="flex items-center gap-3">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#0C4F7A] text-white shadow-xs p-1.5 shrink-0">
+              <AsiaPlastikLogo className="h-full w-full" color="#FFFFFF" />
+            </div>
+            <div className="flex flex-col">
+              <span className="text-sm font-bold tracking-tight text-slate-900 leading-none">Asia Plastik</span>
+              <span className="text-[10px] text-slate-400 mt-1 font-semibold tracking-wider">FINANCE</span>
+            </div>
           </div>
-          <div className="flex flex-col">
-            <span className="text-sm font-bold tracking-tight text-slate-900 leading-none">Asia Plastik</span>
-            <span className="text-[10px] text-slate-400 mt-1 font-semibold tracking-wider">FINANCE</span>
-          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-xl p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors cursor-pointer"
+            title="Tutup Navigasi"
+          >
+            <X className="h-4 w-4" />
+          </button>
         </div>
 
         {/* Navigation list */}
@@ -160,7 +172,7 @@ export default function Sidebar({ isOpen, onClose }) {
               type="button"
               onClick={logout}
               title="Keluar dari Workspace"
-              className="rounded-lg p-1.5 text-slate-400 hover:text-rose-600 hover:bg-slate-100 transition-colors"
+              className="rounded-lg p-1.5 text-slate-400 hover:text-rose-600 hover:bg-slate-100 transition-colors cursor-pointer"
             >
               <LogOut className="h-4 w-4" />
             </button>
