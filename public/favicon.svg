@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="110 110 334 334" fill="none">
+  <!-- Rounded favicon badge -->
+  <rect x="110" y="110" width="334" height="334" rx="72" fill="#0C4F7A" />
+  <g fill="#FFFFFF">
+    <!-- Central Vertical Stem -->
+    <rect x="261" y="140" width="32" height="274" rx="16" />
+    <!-- Right Loop ('p') -->
+    <path d="M 307.00 262.54 L 307.00 298.28 A 75.5 75.5 0 1 0 293.00 167.65 L 293.00 219.57 A 45.0 45.0 0 1 1 307.00 262.54 Z" />
+    <!-- Left Loop ('a') -->
+    <path d="M 247.00 235.46 L 247.00 199.72 A 75.5 75.5 0 1 0 261.00 330.35 L 261.00 278.43 A 45.0 45.0 0 1 1 247.00 235.46 Z" />
+  </g>
+</svg>
