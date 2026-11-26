@@ -94,9 +94,11 @@ export function AppProvider({ children }) {
   const syncToStorage = useCallback((key, data) => {
     try {
       localStorage.setItem(`asia_plastic_${key}`, JSON.stringify(data));
-      const targetRef = ref(rtdb, `${DB_PREFIX}/${key}`);
-      const payload = Array.isArray(data) && data.length === 0 ? { __empty__: true } : data;
-      set(targetRef, payload).catch(() => {});
+      if (rtdb) {
+        const targetRef = ref(rtdb, `${DB_PREFIX}/${key}`);
+        const payload = Array.isArray(data) && data.length === 0 ? { __empty__: true } : data;
+        set(targetRef, payload).catch(() => {});
+      }
     } catch (e) {
       console.warn(`[Storage sync error] ${key}:`, e);
     }
@@ -260,6 +262,10 @@ export function AppProvider({ children }) {
     const unsubscribers = [];
 
     const bindCollection = (key, setter, fallbackData) => {
+      if (!rtdb) {
+        setRtdbConnected(false);
+        return;
+      }
       try {
         const itemRef = ref(rtdb, `${DB_PREFIX}/${key}`);
         const unsub = onValue(
