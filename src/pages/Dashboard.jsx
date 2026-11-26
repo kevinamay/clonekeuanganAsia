@@ -269,56 +269,69 @@ export default function Dashboard() {
     { code: 'SGD', name: 'Dolar Singapura / IDR', flag: '🇸🇬', rate: 'Rp 12.150', change: '+0.08%', trend: 'up' }
   ];
 
-  // Balance Overview Data (Months Jan - Des)
-  const monthlyFlowData = [
-    { month: 'Jan', income: 750000000, outflow: 320000000 },
-    { month: 'Feb', income: 680000000, outflow: 350000000 },
-    { month: 'Mar', income: 1420000000, outflow: 720000000 },
-    { month: 'Apr', income: 890000000, outflow: 480000000 },
-    { month: 'May', income: 1650000000, outflow: 780000000 },
-    { month: 'Jun', income: 980000000, outflow: 510000000 },
-    { month: 'Jul', income: 1540000000, outflow: 840000000 },
-    { month: 'Aug', income: 1880000000, outflow: 920000000 },
-    { month: 'Sep', income: 1120000000, outflow: 610000000 },
-    { month: 'Oct', income: 1450000000, outflow: 690000000 },
-    { month: 'Nov', income: 2290000000, outflow: 850000000 },
-    { month: 'Des', income: 1780000000, outflow: 790000000 }
-  ];
+  const [hoveredMonthIndex, setHoveredMonthIndex] = useState(null);
+
+  // Balance Overview Data (Real 12-Month Series matching live app & RTDB)
+  const monthlyFlowData = useMemo(() => {
+    return [
+      { month: 'Jan', income: 850000000, incomePaid: 850000000, incomeUnpaid: 0, outflow: 221431000 },
+      { month: 'Feb', income: 1120000000, incomePaid: 1120000000, incomeUnpaid: 0, outflow: 0 },
+      { month: 'Mar', income: 1906835700, incomePaid: 1906835700, incomeUnpaid: 0, outflow: 640679 },
+      { month: 'Apr', income: 940000000, incomePaid: 940000000, incomeUnpaid: 0, outflow: 1069342494 },
+      { month: 'May', income: 1350000000, incomePaid: 1350000000, incomeUnpaid: 0, outflow: 751545799 },
+      { month: 'Jun', income: 374625000, incomePaid: 374625000, incomeUnpaid: 0, outflow: 72491584 },
+      { month: 'Jul', income: 1480000000, incomePaid: 1480000000, incomeUnpaid: 0, outflow: 595414028 },
+      { month: 'Aug', income: 2150000000, incomePaid: 2150000000, incomeUnpaid: 0, outflow: 1667454403 },
+      { month: 'Sep', income: 1620000000, incomePaid: 1620000000, incomeUnpaid: 0, outflow: 178171 },
+      { month: 'Oct', income: 1840000000, incomePaid: 1840000000, incomeUnpaid: 0, outflow: 0 },
+      { month: 'Nov', income: 2290000000, incomePaid: 2290000000, incomeUnpaid: 2656085700, outflow: 1152992966 },
+      { month: 'Des', income: 1750000000, incomePaid: 0, incomeUnpaid: 1750000000, outflow: 0 }
+    ];
+  }, []);
 
   const filteredMonthly = useMemo(() => {
     return monthlyFlowData.slice(rangeStart, rangeEnd + 1);
-  }, [rangeStart, rangeEnd]);
+  }, [monthlyFlowData, rangeStart, rangeEnd]);
 
-  // SVG Spline Generator for Balance Overview
-  const maxChartVal = 2500000000;
-  const chartHeight = 160;
-  const chartWidth = 800;
+  // Exact dynamic max chart scaling formula from live app
+  const maxChartVal = useMemo(() => {
+    const rawMax = Math.max(...filteredMonthly.map(e => Math.max(e.income || 0, e.outflow || 0)), 1000000);
+    let exp = Math.pow(10, Math.floor(Math.log10(rawMax)));
+    let norm = rawMax / exp;
+    let factor = norm <= 1 ? 1 : norm <= 1.25 ? 1.25 : norm <= 1.5 ? 1.5 : norm <= 2 ? 2 : norm <= 2.5 ? 2.5 : norm <= 5 ? 5 : norm <= 7.5 ? 7.5 : 10;
+    return factor * exp;
+  }, [filteredMonthly]);
 
-  const getPoints = (key) => {
-    if (filteredMonthly.length === 0) return '';
-    return filteredMonthly
-      .map((item, idx) => {
-        const x = 50 + (idx / Math.max(1, filteredMonthly.length - 1)) * (chartWidth - 100);
-        const y = chartHeight - ((item[key] || 0) / maxChartVal) * (chartHeight - 30);
-        return `${x},${y}`;
-      })
-      .join(' ');
+  // Peak month detection for indicator & floating badge
+  const peakMonth = useMemo(() => {
+    if (filteredMonthly.length === 0) return null;
+    return filteredMonthly.reduce((max, item) => (item.income > (max?.income || 0) ? item : max), filteredMonthly[0]);
+  }, [filteredMonthly]);
+
+  // Exact smooth cubic spline formula from 3s1xhhui8ypbi.js
+  const getCurvePath = (data, key) => {
+    return data.reduce((acc, t, a) => {
+      let s = data.length;
+      let l = s > 1 ? 80 + (a / (s - 1)) * 700 : 430;
+      let n = 175 - (Math.max(0, Math.min(t[key] || 0, maxChartVal)) / maxChartVal) * 140;
+      if (a === 0) return `M ${l} ${n}`;
+      let r = s > 1 ? 80 + ((a - 1) / (s - 1)) * 700 : 430;
+      let i = 175 - (Math.max(0, Math.min(data[a - 1][key] || 0, maxChartVal)) / maxChartVal) * 140;
+      return `${acc} C ${r + (l - r) / 2} ${i}, ${r + (l - r) / 2} ${n}, ${l} ${n}`;
+    }, "");
   };
 
-  const incomePoints = getPoints('income');
-  const outflowPoints = getPoints('outflow');
-
-  const getAreaPath = (pointsStr) => {
-    if (!pointsStr) return '';
-    const pts = pointsStr.split(' ');
-    const firstX = pts[0].split(',')[0];
-    const lastX = pts[pts.length - 1].split(',')[0];
-    return `M ${firstX},${chartHeight} L ${pointsStr.replace(/ /g, ' L ')} L ${lastX},${chartHeight} Z`;
-  };
-
-  const getLinePath = (pointsStr) => {
-    if (!pointsStr) return '';
-    return `M ${pointsStr.replace(/ /g, ' L ')}`;
+  const formatYAxis = (val) => {
+    if (val <= 0) return 'Rp 0';
+    if (val >= 1000000000) {
+      let t = val / 1000000000;
+      return `Rp ${Number.isInteger(t) ? t : t.toFixed(1)} M`;
+    }
+    if (val >= 1000000) {
+      let t = val / 1000000;
+      return `Rp ${Number.isInteger(t) ? t : t.toFixed(0)} Jt`;
+    }
+    return `Rp ${val.toLocaleString('id-ID')}`;
   };
 
   // Recent Transfer Accounts circles matching Image 1
@@ -916,91 +929,236 @@ export default function Dashboard() {
                     </div>
                   </div>
 
+                  <div className="h-3.5 w-[1px] bg-slate-200 hidden sm:block" />
+
                   <div className="flex items-center gap-1 bg-slate-50 border border-slate-200 rounded-xl px-2 py-1 text-xs">
-                    <Calendar className="h-3.5 w-3.5 text-blue-600" />
-                    <span className="text-[11px] font-semibold text-slate-700">01/01/2026 – 12/31/2026</span>
+                    <Calendar className="h-3.5 w-3.5 text-blue-600 shrink-0" />
+                    <span className="text-[11px] font-semibold text-slate-800">01/01/2026 – 12/31/2026</span>
                   </div>
 
                   <button
                     type="button"
                     onClick={() => {
-                      const csv = 'Bulan,Pemasukan,Pengeluaran\n' + monthlyFlowData.map(m => `${m.month},${m.income},${m.outflow}`).join('\n');
+                      const csv = 'Bulan,Pemasukan,Pengeluaran\n' + filteredMonthly.map(m => `${m.month},${m.income},${m.outflow}`).join('\n');
                       const blob = new Blob([csv], { type: 'text/csv' });
                       const url = URL.createObjectURL(blob);
                       const a = document.createElement('a');
                       a.href = url;
-                      a.download = 'Balance_Overview_2026.csv';
+                      a.download = `Ringkasan_Overview_Asia_Plastik_${new Date().toISOString().slice(0, 10)}.csv`;
                       a.click();
-                      notify('Data Balance Overview berhasil diunduh.');
+                      notify('Laporan ringkasan finansial Asia Plastik berhasil diekspor ke CSV.');
                     }}
-                    className="p-1.5 rounded-lg hover:bg-slate-50 text-slate-400 hover:text-slate-700"
-                    title="Unduh Data CSV"
+                    className="p-1.5 rounded-lg hover:bg-slate-50 hover:text-slate-700 text-slate-400 transition-colors cursor-pointer"
+                    title="Unduh Data Ringkasan Finansial CSV"
                   >
                     <Download className="h-4 w-4" />
                   </button>
+
+                  <Link
+                    to="/laporan"
+                    className="p-1.5 rounded-lg hover:bg-slate-50 hover:text-slate-700 text-slate-400 transition-colors"
+                    title="Buka Laporan Penuh"
+                  >
+                    <ExternalLink className="h-4 w-4" />
+                  </Link>
                 </div>
               </div>
 
               {/* Chart SVG Canvas */}
               <div className="relative mt-5 pt-1 pb-1">
                 {/* Floating Peak Label */}
-                <div
-                  className="absolute pointer-events-none z-10"
-                  style={{ left: '91%', top: '15%', transform: 'translate(-50%, -100%)' }}
-                >
-                  <div className="bg-blue-600 text-white font-bold text-xs px-3.5 py-1.5 rounded-full shadow-lg shadow-blue-500/25 ring-2 ring-white">
-                    Rp 2.290.000.000
-                  </div>
-                </div>
+                {peakMonth && hoveredMonthIndex === null && (() => {
+                  const idx = filteredMonthly.findIndex(e => e.month === peakMonth.month);
+                  if (idx === -1) return null;
+                  const s = filteredMonthly.length;
+                  const l = 175 - (Math.max(0, Math.min(peakMonth.income || 0, maxChartVal)) / maxChartVal) * 140;
+                  const leftPct = ((s > 1 ? 80 + (idx / (s - 1)) * 700 : 430) / 800) * 100;
+                  return (
+                    <div
+                      className="absolute pointer-events-none transition-all duration-300 z-10"
+                      style={{
+                        left: `${leftPct}%`,
+                        top: `${(l / 195) * 100}%`,
+                        transform: 'translate(-50%, -125%)'
+                      }}
+                    >
+                      <div className="bg-blue-600 text-white font-bold text-xs px-3.5 py-1.5 rounded-full shadow-lg shadow-blue-500/25 whitespace-nowrap flex items-center gap-1.5 ring-2 ring-white">
+                        <span>{formatVal(peakMonth.income, selectedCurrency)}</span>
+                      </div>
+                    </div>
+                  );
+                })()}
 
-                <svg viewBox="0 0 800 180" className="w-full h-48 overflow-visible select-none" preserveAspectRatio="none">
+                {/* Floating Hover Tooltip */}
+                {hoveredMonthIndex !== null && (() => {
+                  const e = filteredMonthly[hoveredMonthIndex];
+                  if (!e) return null;
+                  const s = filteredMonthly.length;
+                  const leftPct = ((s > 1 ? 80 + (hoveredMonthIndex / (s - 1)) * 700 : 430) / 800) * 100;
+                  const lunas = formatVal(e.incomePaid || e.income, selectedCurrency, true);
+                  const piutang = formatVal(e.incomeUnpaid || 0, selectedCurrency, true);
+                  const keluar = formatVal(e.outflow || 0, selectedCurrency, true);
+                  return (
+                    <div
+                      className="absolute pointer-events-none transition-all duration-150 z-20"
+                      style={{
+                        left: `${leftPct}%`,
+                        top: '4px',
+                        transform: `translateX(${leftPct < 20 ? '-8%' : leftPct > 80 ? '-92%' : '-50%'})`
+                      }}
+                    >
+                      <div className="bg-slate-900/95 text-white backdrop-blur-md px-4 py-1.5 rounded-full shadow-xl text-xs font-medium whitespace-nowrap flex items-center gap-2 border border-slate-700/60 ring-1 ring-black/10">
+                        <span className="font-bold text-white">{e.month}:</span>
+                        <span className="text-blue-400 font-semibold">Lunas {lunas}</span>
+                        {(e.incomeUnpaid || 0) > 0 && (
+                          <>
+                            <span className="text-slate-500">•</span>
+                            <span className="text-amber-300 font-semibold">Piutang {piutang}</span>
+                          </>
+                        )}
+                        <span className="text-slate-500">•</span>
+                        <span className="text-sky-300 font-semibold">Pengeluaran {keluar}</span>
+                      </div>
+                    </div>
+                  );
+                })()}
+
+                {/* SVG Curve Canvas */}
+                <svg viewBox="0 0 800 195" className="w-full h-48 overflow-visible select-none" preserveAspectRatio="none">
                   <defs>
-                    <linearGradient id="blueAreaGrad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#2563EB" stopOpacity="0.25" />
-                      <stop offset="100%" stopColor="#2563EB" stopOpacity="0.0" />
+                    <linearGradient id="chartGlow" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#2563EB" stopOpacity="0.12" />
+                      <stop offset="100%" stopColor="#2563EB" stopOpacity="0" />
                     </linearGradient>
                   </defs>
 
-                  {/* Horizontal Grid lines */}
-                  {[30, 75, 120, 160].map((y, i) => (
-                    <line key={i} x1="50" y1={y} x2="750" y2={y} stroke="#F1F5F9" strokeWidth="1" strokeDasharray="3 3" />
+                  {/* Horizontal grid lines & Y-axis labels */}
+                  {[
+                    { ratio: 1, y: 35 },
+                    { ratio: 0.75, y: 70 },
+                    { ratio: 0.5, y: 105 },
+                    { ratio: 0.25, y: 140 },
+                    { ratio: 0, y: 175 }
+                  ].map((e) => (
+                    <g key={e.y}>
+                      <text
+                        x="64"
+                        y={e.y + 3.5}
+                        textAnchor="end"
+                        fontSize="9.5"
+                        fill="#94A3B8"
+                        className="select-none font-medium"
+                      >
+                        {formatYAxis(maxChartVal * e.ratio)}
+                      </text>
+                      <line
+                        x1="72"
+                        y1={e.y}
+                        x2="788"
+                        y2={e.y}
+                        stroke={175 === e.y ? '#CBD5E1' : '#F1F5F9'}
+                        strokeWidth={175 === e.y ? '1.2' : '1'}
+                        strokeDasharray={175 === e.y ? undefined : '3 3'}
+                      />
+                    </g>
                   ))}
 
-                  {/* Area fill */}
-                  <path d={getAreaPath(incomePoints)} fill="url(#blueAreaGrad)" />
+                  {/* Vertical Y-axis line */}
+                  <line x1="72" y1="30" x2="72" y2="175" stroke="#E2E8F0" strokeWidth="1" />
 
-                  {/* Outflow line (light blue) */}
-                  <path d={getLinePath(outflowPoints)} fill="none" stroke="#93C5FD" strokeWidth="2.5" />
+                  {/* Outflow line (light blue smooth spline) */}
+                  <path
+                    d={getCurvePath(filteredMonthly, 'outflow')}
+                    fill="none"
+                    stroke="#93C5FD"
+                    strokeWidth="2.5"
+                    strokeLinecap="round"
+                  />
 
-                  {/* Income line (strong blue) */}
-                  <path d={getLinePath(incomePoints)} fill="none" stroke="#2563EB" strokeWidth="3" />
+                  {/* Income line (strong blue smooth spline) */}
+                  <path
+                    d={getCurvePath(filteredMonthly, 'income')}
+                    fill="none"
+                    stroke="#2563EB"
+                    strokeWidth="3.2"
+                    strokeLinecap="round"
+                  />
 
-                  {/* Data Point Circles on Income Line */}
-                  {filteredMonthly.map((item, idx) => {
-                    const x = 50 + (idx / Math.max(1, filteredMonthly.length - 1)) * (chartWidth - 100);
-                    const y = chartHeight - ((item.income || 0) / maxChartVal) * (chartHeight - 30);
+                  {/* Single peak indicator circle on peak month */}
+                  {peakMonth && hoveredMonthIndex === null && (() => {
+                    const idx = filteredMonthly.findIndex(e => e.month === peakMonth.month);
+                    if (idx === -1) return null;
+                    const s = filteredMonthly.length;
+                    const cx = s > 1 ? 80 + (idx / (s - 1)) * 700 : 430;
+                    const cy = 175 - (Math.max(0, Math.min(peakMonth.income || 0, maxChartVal)) / maxChartVal) * 140;
                     return (
-                      <circle
-                        key={idx}
-                        cx={x}
-                        cy={y}
-                        r={idx === 10 ? 5.5 : 3.5}
-                        fill={idx === 10 ? '#2563EB' : '#FFFFFF'}
-                        stroke="#2563EB"
-                        strokeWidth="2"
-                        className="cursor-pointer hover:r-6 transition-all"
+                      <g key="peak-indicator">
+                        <circle cx={cx} cy={cy} r="7" fill="#BFDBFE" opacity="0.8" />
+                        <circle cx={cx} cy={cy} r="4" fill="#2563EB" stroke="#FFFFFF" strokeWidth="2" />
+                      </g>
+                    );
+                  })()}
+
+                  {/* Hover guideline and dots */}
+                  {hoveredMonthIndex !== null && (() => {
+                    const e = filteredMonthly[hoveredMonthIndex];
+                    if (!e) return null;
+                    const s = filteredMonthly.length;
+                    const cx = s > 1 ? 80 + (hoveredMonthIndex / (s - 1)) * 700 : 430;
+                    const cyInc = 175 - (Math.max(0, Math.min(e.income || 0, maxChartVal)) / maxChartVal) * 140;
+                    const cyOut = 175 - (Math.max(0, Math.min(e.outflow || 0, maxChartVal)) / maxChartVal) * 140;
+                    return (
+                      <g key="hover-guide">
+                        <line x1={cx} y1="30" x2={cx} y2="175" stroke="#3B82F6" strokeWidth="1.5" strokeDasharray="2 2" />
+                        <circle cx={cx} cy={cyInc} r="4.5" fill="#2563EB" stroke="#FFFFFF" strokeWidth="2" />
+                        <circle cx={cx} cy={cyOut} r="4.5" fill="#93C5FD" stroke="#FFFFFF" strokeWidth="2" />
+                      </g>
+                    );
+                  })()}
+
+                  {/* Invisible mouse hover trigger rectangles */}
+                  {filteredMonthly.map((e, a) => {
+                    const s = filteredMonthly.length;
+                    const cx = s > 1 ? 80 + (a / (s - 1)) * 700 : 430;
+                    const width = s > 1 ? 700 / (s - 1) : 120;
+                    return (
+                      <rect
+                        key={`hit-${e.month}`}
+                        x={cx - width / 2}
+                        y={25}
+                        width={width}
+                        height={160}
+                        fill="transparent"
+                        className="cursor-pointer"
+                        onMouseEnter={() => setHoveredMonthIndex(a)}
+                        onMouseLeave={() => setHoveredMonthIndex(null)}
                       />
                     );
                   })}
                 </svg>
 
-                {/* X-Axis Month Labels */}
-                <div className="relative h-6 mt-1 flex justify-between px-12 text-[11px] text-slate-400 font-medium">
-                  {filteredMonthly.map((m, idx) => (
-                    <span key={idx} className={idx === 10 ? 'text-blue-600 font-bold' : ''}>
-                      {m.month}
-                    </span>
-                  ))}
+                {/* X-Axis Month Labels below chart */}
+                <div className="relative h-6 mt-1 select-none">
+                  {filteredMonthly.map((e, a) => {
+                    const s = filteredMonthly.length;
+                    const leftPct = ((s > 1 ? 80 + (a / (s - 1)) * 700 : 430) / 800) * 100;
+                    const isPeak = peakMonth && peakMonth.month === e.month;
+                    const isHover = hoveredMonthIndex === a;
+                    return (
+                      <button
+                        key={e.month}
+                        type="button"
+                        onMouseEnter={() => setHoveredMonthIndex(a)}
+                        onMouseLeave={() => setHoveredMonthIndex(null)}
+                        className={`absolute -translate-x-1/2 text-[11px] transition-colors cursor-pointer select-none ${
+                          isHover || isPeak ? 'text-blue-600 font-bold' : 'text-slate-400 font-medium hover:text-slate-700'
+                        }`}
+                        style={{ left: `${leftPct}%` }}
+                      >
+                        {e.month}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
             </div>
@@ -1014,25 +1172,29 @@ export default function Dashboard() {
                     <span>Akses Cepat Geser:</span>
                   </span>
                   {[
-                    { label: '1B', s: 10, e: 10 },
-                    { label: '3B', s: 8, e: 10 },
-                    { label: '6B', s: 5, e: 10 },
-                    { label: 'YTD', s: 0, e: 10 },
-                    { label: '1T (Semua)', s: 0, e: 11 }
-                  ].map((p) => (
-                    <button
-                      key={p.label}
-                      type="button"
-                      onClick={() => { setRangeStart(p.s); setRangeEnd(p.e); }}
-                      className={`px-2 py-0.5 rounded-lg text-[10.5px] font-bold transition-all ${
-                        rangeStart === p.s && rangeEnd === p.e
-                          ? 'bg-blue-600 text-white shadow-2xs'
-                          : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                      }`}
-                    >
-                      {p.label}
-                    </button>
-                  ))}
+                    { label: '1B', s: 10, e: 10, title: '1 Bulan (Nov)' },
+                    { label: '3B', s: 8, e: 10, title: '3 Bulan (Sep - Nov)' },
+                    { label: '6B', s: 5, e: 10, title: '6 Bulan (Jun - Nov)' },
+                    { label: 'YTD', s: 0, e: 10, title: 'Awal Tahun s/d Nov' },
+                    { label: '1T (Semua)', s: 0, e: 11, title: '1 Tahun Penuh (Jan - Des)' }
+                  ].map((p) => {
+                    const active = rangeStart === p.s && rangeEnd === p.e;
+                    return (
+                      <button
+                        key={p.label}
+                        type="button"
+                        onClick={() => { setRangeStart(p.s); setRangeEnd(p.e); }}
+                        className={`px-2 py-0.5 rounded-lg text-[10.5px] font-bold transition-all cursor-pointer ${
+                          active
+                            ? 'bg-blue-600 text-white shadow-2xs'
+                            : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                        }`}
+                        title={p.title}
+                      >
+                        {p.label}
+                      </button>
+                    );
+                  })}
                 </div>
 
                 <div className="text-[11px] font-semibold text-slate-500 flex items-center gap-1.5">
@@ -1043,31 +1205,64 @@ export default function Dashboard() {
               </div>
 
               {/* Range Slider Track */}
-              <div className="relative pt-2 pb-1 px-1">
-                <div className="relative h-2 rounded-full bg-slate-100 w-full overflow-hidden">
+              <div className="relative pt-3 pb-2 px-1 select-none">
+                <div className="relative h-2.5 rounded-full bg-slate-100 w-full overflow-hidden">
                   <div
-                    className="absolute top-0 bottom-0 bg-blue-600 rounded-full shadow-xs"
+                    className="absolute top-0 bottom-0 bg-blue-600 rounded-full transition-all duration-75 shadow-xs"
                     style={{
                       left: `${(rangeStart / 11) * 100}%`,
-                      width: `${Math.max(5, ((rangeEnd - rangeStart) / 11) * 100)}%`
+                      width: `${Math.max(3, ((rangeEnd - rangeStart) / 11) * 100)}%`
                     }}
                   />
                 </div>
-                <div className="flex justify-between text-[10px] font-semibold text-slate-400 mt-1">
-                  {MONTHS.map((m, idx) => (
-                    <button
-                      key={m}
-                      type="button"
-                      onClick={() => {
-                        if (idx < rangeStart) setRangeStart(idx);
-                        else if (idx > rangeEnd) setRangeEnd(idx);
-                        else { setRangeStart(idx); setRangeEnd(idx); }
-                      }}
-                      className={idx >= rangeStart && idx <= rangeEnd ? 'text-blue-600 font-bold' : 'hover:text-slate-700'}
-                    >
-                      {m}
-                    </button>
-                  ))}
+
+                <div className="relative -mt-3.5 h-6">
+                  <input
+                    type="range"
+                    min={0}
+                    max={11}
+                    step={1}
+                    value={rangeStart}
+                    onChange={(e) => {
+                      const val = Number(e.target.value);
+                      if (val <= rangeEnd) setRangeStart(val);
+                    }}
+                    className="range-slider-thumb absolute w-full top-0 h-6 appearance-none bg-transparent cursor-grab active:cursor-grabbing z-20 pointer-events-auto"
+                    title={`Geser Bulan Awal: ${MONTHS[rangeStart]}`}
+                  />
+                  <input
+                    type="range"
+                    min={0}
+                    max={11}
+                    step={1}
+                    value={rangeEnd}
+                    onChange={(e) => {
+                      const val = Number(e.target.value);
+                      if (val >= rangeStart) setRangeEnd(val);
+                    }}
+                    className="range-slider-thumb absolute w-full top-0 h-6 appearance-none bg-transparent cursor-grab active:cursor-grabbing z-20 pointer-events-auto"
+                    title={`Geser Bulan Akhir: ${MONTHS[rangeEnd]}`}
+                  />
+                </div>
+
+                <div className="flex justify-between text-[10px] font-semibold text-slate-400 mt-0.5 px-0.5">
+                  {MONTHS.map((m, idx) => {
+                    const inRange = idx >= rangeStart && idx <= rangeEnd;
+                    return (
+                      <button
+                        key={m}
+                        type="button"
+                        onClick={() => {
+                          if (idx < rangeStart) setRangeStart(idx);
+                          else if (idx > rangeEnd) setRangeEnd(idx);
+                          else { setRangeStart(idx); setRangeEnd(idx); }
+                        }}
+                        className={`cursor-pointer transition-colors ${inRange ? 'text-blue-600 font-bold' : 'hover:text-slate-700'}`}
+                      >
+                        {m}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
             </div>
