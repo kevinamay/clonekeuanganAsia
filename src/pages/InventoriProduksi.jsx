@@ -17,33 +17,7 @@ import {
   Check
 } from 'lucide-react';
 
-const DEFAULT_BOMS = [
-  {
-    id: 'bom-001',
-    name: 'BOM Kantong Roll HDPE 40x60',
-    code: 'BOM-HDPE-4060',
-    category: 'Blow Film Extrusion',
-    costBasis: 'Biaya Standar',
-    product: 'Kantong Plastik HDPE Roll 40x60 Transparan',
-    description: 'Komposisi biji murni HDPE 95% + Masterbatch anti-UV & slip 5%',
-    components: [
-      { name: 'Biji Plastik HDPE Virgin Grade', qty: 1.02, unit: 'Kg', unitCost: 22500 },
-      { name: 'Masterbatch Anti-UV & Slip Agent', qty: 0.03, unit: 'Kg', unitCost: 85000 }
-    ]
-  },
-  {
-    id: 'bom-002',
-    name: 'BOM Plastik PP Sheet 0.05mm',
-    code: 'BOM-PP-005',
-    category: 'Cast PP Sheet',
-    costBasis: 'Biaya Standar',
-    product: 'Plastik Lembaran PP Ketebalan 0.05mm',
-    description: 'Bahan baku polipropilena murni untuk kemasan blister dan thermoforming',
-    components: [
-      { name: 'Biji Plastik PP Homopolymer', qty: 1.05, unit: 'Kg', unitCost: 21000 }
-    ]
-  }
-];
+const DEFAULT_BOMS = [];
 
 export default function InventoriProduksi() {
   const {

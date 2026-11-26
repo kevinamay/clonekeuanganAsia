@@ -47,10 +47,10 @@ function isManagerOrOwner(role) {
   return role === "Owner" || role === "Finance Manager";
 }
 
-const INITIAL_BANK_ACCOUNTS = seedData.Y || [];
-const INITIAL_SALES_DOCS = seedData.q || [];
-const INITIAL_PURCHASE_DOCS = seedData.$ || [];
-const INITIAL_EXPENSES = seedData.x || [];
+const INITIAL_BANK_ACCOUNTS = [];
+const INITIAL_SALES_DOCS = [];
+const INITIAL_PURCHASE_DOCS = [];
+const INITIAL_EXPENSES = [];
 
 function formatRupiah(val, compact = false) {
   let num = typeof val !== 'number' || isNaN(val) ? Number(val) || 0 : val;

@@ -91,12 +91,20 @@ export default function Dashboard() {
     period,
     notify,
     confirmAction,
-    bankAccounts: initialBankAccounts,
-    salesDocs: initialSalesDocs,
-    purchaseDocs: initialPurchaseDocs,
-    expenses: initialExpenses,
-    personalNotes: initialNotes
+    bankAccounts = [],
+    setBankAccounts,
+    salesDocs = [],
+    setSalesDocs,
+    purchaseDocs = [],
+    setPurchaseDocs,
+    expenses = [],
+    setExpenses,
+    personalNotes = [],
+    setPersonalNotes,
+    workOrders = [],
+    budgetRows = []
   } = useAppContext();
+  const { user } = useAuth();
 
   const navigate = useNavigate();
 
@@ -237,13 +245,44 @@ export default function Dashboard() {
     }, 600);
   };
 
-  // Static/Seed Values matching exactly with the uploaded live dashboard screenshot
-  const totalBalanceIDR = 6605182808;
-  const netFlowIDR = 10389969576;
-  const incomeLunasIDR = 15921460788;
-  const incomeBelumLunasIDR = 4406085700;
-  const totalExpensesIDR = 5531491124;
-  const totalOmsetIDR = 20327546400;
+  // Dynamic financial metrics derived strictly from user's manual data
+  const totalBalanceIDR = useMemo(() => {
+    return (bankAccounts || []).reduce((sum, acc) => sum + (Number(acc.balance) || 0), 0);
+  }, [bankAccounts]);
+
+  const incomeLunasDocs = useMemo(() => {
+    return (salesDocs || []).filter(doc => doc.status === 'Lunas' || doc.status === 'Paid');
+  }, [salesDocs]);
+
+  const incomeBelumLunasDocs = useMemo(() => {
+    return (salesDocs || []).filter(doc => doc.status !== 'Lunas' && doc.status !== 'Paid');
+  }, [salesDocs]);
+
+  const incomeLunasIDR = useMemo(() => {
+    return incomeLunasDocs.reduce((sum, doc) => sum + (Number(doc.totalAmount || doc.amount || doc.total) || 0), 0);
+  }, [incomeLunasDocs]);
+
+  const incomeBelumLunasIDR = useMemo(() => {
+    return incomeBelumLunasDocs.reduce((sum, doc) => sum + (Number(doc.totalAmount || doc.amount || doc.total) || 0), 0);
+  }, [incomeBelumLunasDocs]);
+
+  const totalOmsetIDR = incomeLunasIDR + incomeBelumLunasIDR;
+
+  const totalExpensesIDR = useMemo(() => {
+    const fromExpenses = (expenses || []).reduce((sum, exp) => sum + (Number(exp.amount || exp.total) || 0), 0);
+    const fromPurchases = (purchaseDocs || [])
+      .filter(p => p.status === 'Lunas' || p.status === 'Paid')
+      .reduce((sum, p) => sum + (Number(p.totalAmount || p.amount || p.total) || 0), 0);
+    return fromExpenses + fromPurchases;
+  }, [expenses, purchaseDocs]);
+
+  const netFlowIDR = incomeLunasIDR - totalExpensesIDR;
+  const marginLabaPct = totalOmsetIDR > 0 ? ((netFlowIDR / totalOmsetIDR) * 100).toFixed(1) : '0';
+  const pctLunas = totalOmsetIDR > 0 ? Math.round((incomeLunasIDR / totalOmsetIDR) * 100) : 0;
+  const pctBelumLunas = totalOmsetIDR > 0 ? (100 - pctLunas) : 0;
+  const fakturLunasCount = incomeLunasDocs.length;
+  const fakturBerjalanCount = incomeBelumLunasDocs.length;
+  const expensesCount = (expenses || []).length + (purchaseDocs || []).length;
 
   // Conversion rate helper
   const convertAmount = (valIDR) => {
@@ -271,23 +310,51 @@ export default function Dashboard() {
 
   const [hoveredMonthIndex, setHoveredMonthIndex] = useState(null);
 
-  // Balance Overview Data (Real 12-Month Series matching live app & RTDB)
+  // Balance Overview Data dynamically computed from real entered transactions
   const monthlyFlowData = useMemo(() => {
-    return [
-      { month: 'Jan', income: 850000000, incomePaid: 850000000, incomeUnpaid: 0, outflow: 221431000 },
-      { month: 'Feb', income: 1120000000, incomePaid: 1120000000, incomeUnpaid: 0, outflow: 0 },
-      { month: 'Mar', income: 1906835700, incomePaid: 1906835700, incomeUnpaid: 0, outflow: 640679 },
-      { month: 'Apr', income: 940000000, incomePaid: 940000000, incomeUnpaid: 0, outflow: 1069342494 },
-      { month: 'May', income: 1350000000, incomePaid: 1350000000, incomeUnpaid: 0, outflow: 751545799 },
-      { month: 'Jun', income: 374625000, incomePaid: 374625000, incomeUnpaid: 0, outflow: 72491584 },
-      { month: 'Jul', income: 1480000000, incomePaid: 1480000000, incomeUnpaid: 0, outflow: 595414028 },
-      { month: 'Aug', income: 2150000000, incomePaid: 2150000000, incomeUnpaid: 0, outflow: 1667454403 },
-      { month: 'Sep', income: 1620000000, incomePaid: 1620000000, incomeUnpaid: 0, outflow: 178171 },
-      { month: 'Oct', income: 1840000000, incomePaid: 1840000000, incomeUnpaid: 0, outflow: 0 },
-      { month: 'Nov', income: 2290000000, incomePaid: 2290000000, incomeUnpaid: 2656085700, outflow: 1152992966 },
-      { month: 'Des', income: 1750000000, incomePaid: 0, incomeUnpaid: 1750000000, outflow: 0 }
-    ];
-  }, []);
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Des'];
+    const map = months.map(m => ({ month: m, income: 0, incomePaid: 0, incomeUnpaid: 0, outflow: 0 }));
+
+    (salesDocs || []).forEach(doc => {
+      const d = doc.date ? new Date(doc.date) : null;
+      if (d && !isNaN(d.getTime())) {
+        const mIdx = d.getMonth();
+        const amt = Number(doc.totalAmount || doc.amount || doc.total) || 0;
+        if (mIdx >= 0 && mIdx < 12) {
+          map[mIdx].income += amt;
+          if (doc.status === 'Lunas' || doc.status === 'Paid') {
+            map[mIdx].incomePaid += amt;
+          } else {
+            map[mIdx].incomeUnpaid += amt;
+          }
+        }
+      }
+    });
+
+    (expenses || []).forEach(exp => {
+      const d = exp.date ? new Date(exp.date) : null;
+      if (d && !isNaN(d.getTime())) {
+        const mIdx = d.getMonth();
+        const amt = Number(exp.amount || exp.total) || 0;
+        if (mIdx >= 0 && mIdx < 12) {
+          map[mIdx].outflow += amt;
+        }
+      }
+    });
+
+    (purchaseDocs || []).forEach(p => {
+      const d = p.date ? new Date(p.date) : null;
+      if (d && !isNaN(d.getTime())) {
+        const mIdx = d.getMonth();
+        const amt = Number(p.totalAmount || p.amount || p.total) || 0;
+        if (mIdx >= 0 && mIdx < 12) {
+          map[mIdx].outflow += amt;
+        }
+      }
+    });
+
+    return map;
+  }, [salesDocs, expenses, purchaseDocs]);
 
   const filteredMonthly = useMemo(() => {
     return monthlyFlowData.slice(rangeStart, rangeEnd + 1);
@@ -305,7 +372,8 @@ export default function Dashboard() {
   // Peak month detection for indicator & floating badge
   const peakMonth = useMemo(() => {
     if (filteredMonthly.length === 0) return null;
-    return filteredMonthly.reduce((max, item) => (item.income > (max?.income || 0) ? item : max), filteredMonthly[0]);
+    const maxItem = filteredMonthly.reduce((max, item) => (item.income > (max?.income || 0) ? item : max), filteredMonthly[0]);
+    return maxItem && maxItem.income > 0 ? maxItem : null;
   }, [filteredMonthly]);
 
   // Exact smooth cubic spline formula from 3s1xhhui8ypbi.js
@@ -334,14 +402,19 @@ export default function Dashboard() {
     return `Rp ${val.toLocaleString('id-ID')}`;
   };
 
-  // Recent Transfer Accounts circles matching Image 1
-  const recentAccounts = [
-    { label: 'BK', color: 'bg-blue-600' },
-    { label: 'KB', color: 'bg-blue-700' },
-    { label: 'MDR', color: 'bg-blue-800' },
-    { label: 'BNI', color: 'bg-slate-700' },
-    { label: '+2', color: 'bg-slate-900' }
-  ];
+  // Recent Transfer Accounts derived dynamically from registered bank accounts
+  const recentAccounts = useMemo(() => {
+    return (bankAccounts || []).slice(0, 5).map(acc => {
+      const name = acc.bankName || 'BA';
+      const words = name.split(' ');
+      const label = words.length > 1 ? (words[0][0] + words[1][0]).toUpperCase() : name.slice(0, 2).toUpperCase();
+      return {
+        label,
+        color: 'bg-blue-600',
+        name
+      };
+    });
+  }, [bankAccounts]);
 
   // Helper for Looker widget moving
   const moveWidget = (idx, dir) => {
@@ -544,20 +617,25 @@ export default function Dashboard() {
               </div>
 
               <div className="text-[11px] text-slate-400 font-medium mb-3">
-                Recent Accounts (5)
+                Recent Accounts ({recentAccounts.length})
               </div>
 
               <div className="flex items-center justify-between">
-                <div className="flex items-center -space-x-2">
-                  {recentAccounts.map((acc, idx) => (
-                    <div
-                      key={idx}
-                      className={`h-8 w-8 rounded-full ${acc.color} text-white flex items-center justify-center text-[10px] font-bold ring-2 ring-white shadow-2xs hover:scale-105 transition-transform`}
-                    >
-                      {acc.label}
-                    </div>
-                  ))}
-                </div>
+                {recentAccounts.length > 0 ? (
+                  <div className="flex items-center -space-x-2">
+                    {recentAccounts.map((acc, idx) => (
+                      <div
+                        key={idx}
+                        className={`h-8 w-8 rounded-full ${acc.color} text-white flex items-center justify-center text-[10px] font-bold ring-2 ring-white shadow-2xs hover:scale-105 transition-transform`}
+                        title={acc.name}
+                      >
+                        {acc.label}
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <span className="text-xs text-slate-400">Belum ada rekening</span>
+                )}
 
                 <button
                   type="button"
@@ -590,7 +668,7 @@ export default function Dashboard() {
                 </div>
               </div>
               <div className="mt-2 text-[10.5px] font-medium text-white/80 flex items-center justify-between">
-                <span>11 Transaksi Lunas</span>
+                <span>{fakturLunasCount} Transaksi Lunas</span>
                 <span className="text-[10px] text-white/70">Realisasi Kas</span>
               </div>
             </div>
@@ -612,7 +690,7 @@ export default function Dashboard() {
                 </div>
               </div>
               <div className="mt-2 text-[10.5px] font-medium text-slate-400 flex items-center justify-between">
-                <span>4 Faktur Berjalan</span>
+                <span>{fakturBerjalanCount} Faktur Berjalan</span>
                 <Link to="/penjualan" className="text-blue-600 hover:underline font-semibold text-[10px]">
                   Kelola →
                 </Link>
@@ -631,7 +709,7 @@ export default function Dashboard() {
                 </div>
               </div>
               <div className="mt-2 text-[10.5px] font-medium text-slate-400">
-                43 Biaya & PO
+                {expensesCount} Biaya & PO
               </div>
             </div>
 
@@ -643,11 +721,11 @@ export default function Dashboard() {
                 </div>
                 <div className="text-xs font-semibold text-slate-500">Net Flow</div>
                 <div className="num mt-2 text-xl sm:text-2xl font-bold tracking-tight text-slate-900">
-                  +{dispNetFlow}
+                  {dispNetFlow}
                 </div>
               </div>
               <div className="mt-2 text-[10.5px] font-medium text-slate-400">
-                Margin Laba 65.3%
+                Margin Laba {marginLabaPct}%
               </div>
             </div>
           </div>
@@ -675,52 +753,73 @@ export default function Dashboard() {
                 </div>
               </div>
 
-              {/* Note Item matching screenshot */}
-              <div className="rounded-2xl border border-slate-100 bg-slate-50/80 p-3.5">
-                <div className="flex items-center justify-between gap-1.5">
-                  <div className="flex items-center gap-1.5 flex-wrap">
-                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-100 text-blue-700">
-                      Sedang
-                    </span>
-                    <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-slate-100 text-slate-600">
-                      Catatan Internal
-                    </span>
-                  </div>
-                  <span className="text-[10px] text-slate-400">21 Nov 2026</span>
-                </div>
+              {/* Dynamic Note Item or Clean Empty State */}
+              {personalNotes && personalNotes.length > 0 ? (
+                (() => {
+                  const latestNote = personalNotes[personalNotes.length - 1];
+                  return (
+                    <div className="rounded-2xl border border-slate-100 bg-slate-50/80 p-3.5">
+                      <div className="flex items-center justify-between gap-1.5">
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                            latestNote.severity === 'Kritis' ? 'bg-rose-100 text-rose-700' :
+                            latestNote.severity === 'Tinggi' ? 'bg-amber-100 text-amber-700' :
+                            'bg-blue-100 text-blue-700'
+                          }`}>
+                            {latestNote.severity || 'Sedang'}
+                          </span>
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-slate-100 text-slate-600">
+                            {latestNote.type || 'Catatan Internal'}
+                          </span>
+                        </div>
+                        <span className="text-[10px] text-slate-400">{latestNote.createdAt || latestNote.dueDate || 'Hari Ini'}</span>
+                      </div>
 
-                <div className="mt-2 text-xs text-blue-600 break-all font-mono">
-                  https://www.youtube.com/shorts/dzD6GL4nWzA
-                </div>
+                      <div className="mt-2 text-xs text-slate-800 line-clamp-2 font-medium">
+                        {latestNote.title || latestNote.content}
+                      </div>
 
-                <div className="mt-3 pt-2.5 border-t border-slate-200/60 flex items-center justify-between">
-                  <div className="flex items-center -space-x-1.5">
-                    <div className="h-5 w-5 rounded-full bg-blue-600 text-white flex items-center justify-center text-[9px] font-bold ring-2 ring-white">
-                      C
+                      <div className="mt-3 pt-2.5 border-t border-slate-200/60 flex items-center justify-between">
+                        <div className="flex items-center -space-x-1.5">
+                          <div className="h-5 w-5 rounded-full bg-blue-600 text-white flex items-center justify-center text-[9px] font-bold ring-2 ring-white">
+                            {(latestNote.author || 'User')[0].toUpperCase()}
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            navigator.clipboard.writeText(latestNote.content || latestNote.title || '');
+                            notify('Catatan disalin ke clipboard.');
+                          }}
+                          className="text-slate-400 hover:text-slate-600 transition-colors"
+                          title="Bagikan Catatan"
+                        >
+                          <Share2 className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
                     </div>
-                    <div className="h-5 w-5 rounded-full bg-slate-800 text-white flex items-center justify-center text-[9px] font-bold ring-2 ring-white">
-                      K
-                    </div>
-                  </div>
+                  );
+                })()
+              ) : (
+                <div className="rounded-2xl border border-dashed border-slate-200 p-4 text-center">
+                  <p className="text-xs text-slate-400">Belum ada catatan finansial.</p>
                   <button
                     type="button"
-                    onClick={() => {
-                      navigator.clipboard.writeText('https://www.youtube.com/shorts/dzD6GL4nWzA');
-                      notify('Tautan disalin ke clipboard.');
-                    }}
-                    className="text-slate-400 hover:text-slate-600 transition-colors"
-                    title="Bagikan Catatan"
+                    onClick={() => setAddNoteOpen(true)}
+                    className="mt-2 inline-flex items-center gap-1 text-[11px] font-bold text-blue-600 hover:text-blue-700"
                   >
-                    <Share2 className="h-3.5 w-3.5" />
+                    <Plus className="h-3 w-3" /> Buat Catatan Baru
                   </button>
                 </div>
-              </div>
+              )}
             </div>
 
             <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-semibold text-slate-600">
               <span>Tugas Tertunda</span>
               <div className="flex items-center gap-2">
-                <span className="num text-blue-600 font-bold">10 Items</span>
+                <span className="num text-blue-600 font-bold">
+                  {(personalNotes || []).filter(n => !n.completed).length} Items
+                </span>
                 <Link
                   to="/tugas"
                   className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-blue-50 text-blue-600 hover:bg-blue-100 font-bold text-[11px]"
@@ -768,18 +867,18 @@ export default function Dashboard() {
             <div className="flex items-center justify-between text-xs font-semibold mb-2">
               <div className="flex items-center gap-2 text-blue-700">
                 <span className="h-2.5 w-2.5 rounded-full bg-blue-600 inline-block" />
-                <span>Sudah Lunas (78%)</span>
+                <span>Sudah Lunas ({pctLunas}%)</span>
               </div>
               <div className="flex items-center gap-2 text-slate-600">
                 <span className="h-2.5 w-2.5 rounded-full bg-blue-200 inline-block" />
-                <span>Belum Lunas / Piutang (22%)</span>
+                <span>Belum Lunas / Piutang ({pctBelumLunas}%)</span>
               </div>
             </div>
 
             {/* Split Progress Bar */}
             <div className="h-3 w-full bg-slate-100 rounded-full overflow-hidden flex shadow-2xs">
-              <div style={{ width: '78%' }} className="h-full bg-blue-600 rounded-l-full transition-all" />
-              <div style={{ width: '22%' }} className="h-full bg-blue-200 rounded-r-full transition-all" />
+              <div style={{ width: `${pctLunas}%` }} className="h-full bg-blue-600 rounded-l-full transition-all" />
+              <div style={{ width: `${pctBelumLunas}%` }} className="h-full bg-blue-200 rounded-r-full transition-all" />
             </div>
           </div>
 
@@ -791,7 +890,7 @@ export default function Dashboard() {
                   <span>Realisasi Kas (Sudah Lunas)</span>
                 </div>
                 <span className="text-[11px] font-semibold text-blue-700 bg-white px-2 py-0.5 rounded-full border border-blue-200/60">
-                  11 Faktur Lunas
+                  {fakturLunasCount} Faktur Lunas
                 </span>
               </div>
               <div className="num mt-2 text-xl font-bold text-blue-700">
@@ -809,7 +908,7 @@ export default function Dashboard() {
                   <span>Piutang Dagang (Belum Lunas)</span>
                 </div>
                 <span className="text-[11px] font-semibold text-slate-600 bg-white px-2 py-0.5 rounded-full border border-slate-200">
-                  4 Faktur Berjalan
+                  {fakturBerjalanCount} Faktur Berjalan
                 </span>
               </div>
               <div className="num mt-2 text-xl font-bold text-slate-900">
@@ -882,24 +981,26 @@ export default function Dashboard() {
                 </Link>
               </div>
 
-              <div className="flex items-center gap-4">
-                <div className="flex items-end gap-1.5 h-6 shrink-0">
-                  <span style={{ height: '22px' }} className="w-1.5 bg-blue-600 rounded-full" />
-                  <span style={{ height: '14px' }} className="w-1.5 bg-blue-400 rounded-full" />
-                  <span style={{ height: '8px' }} className="w-1.5 bg-slate-300 rounded-full" />
-                  <span style={{ height: '18px' }} className="w-1.5 bg-blue-500 rounded-full" />
+              {expensesCount > 0 ? (
+                <div className="flex items-center gap-4">
+                  <div className="flex items-end gap-1.5 h-6 shrink-0">
+                    <span style={{ height: '22px' }} className="w-1.5 bg-blue-600 rounded-full" />
+                    <span style={{ height: '14px' }} className="w-1.5 bg-blue-400 rounded-full" />
+                    <span style={{ height: '8px' }} className="w-1.5 bg-slate-300 rounded-full" />
+                    <span style={{ height: '18px' }} className="w-1.5 bg-blue-500 rounded-full" />
+                  </div>
+                  <div className="flex flex-wrap items-center gap-3 text-xs font-semibold">
+                    <span className="flex items-center gap-1.5 text-slate-800">
+                      <span className="h-2 w-2 rounded-full bg-blue-600" />
+                      Beban Operasional ({formatVal(totalExpensesIDR, selectedCurrency, true)})
+                    </span>
+                  </div>
                 </div>
-                <div className="flex flex-wrap items-center gap-3 text-xs font-semibold">
-                  <span className="flex items-center gap-1.5 text-slate-800">
-                    <span className="h-2 w-2 rounded-full bg-blue-600" />
-                    Bahan Baku & Pemasok (87%)
-                  </span>
-                  <span className="flex items-center gap-1.5 text-slate-500">
-                    <span className="h-2 w-2 rounded-full bg-slate-300" />
-                    Biaya Promosi / Iklan (11%)
-                  </span>
+              ) : (
+                <div className="text-xs text-slate-400 py-2">
+                  Belum ada riwayat pengeluaran atau pembelian dicatat.
                 </div>
-              </div>
+              )}
             </div>
           </div>
 
@@ -1397,116 +1498,77 @@ export default function Dashboard() {
                     {/* WIDGET CONTENT RENDERING */}
                     <div className="py-2">
                       {/* Widget 1: Line Chart (Sales & Margin) */}
-                      {w.variable === 'sales' && w.chartType === 'line' && (
+                      {w.variable === 'sales' && (
                         <div>
-                          <div className="relative h-32 w-full pt-1">
-                            <svg viewBox="0 0 500 110" className="w-full h-full" preserveAspectRatio="none">
-                              <defs>
-                                <linearGradient id="widgetSalesGrad" x1="0" y1="0" x2="0" y2="1">
-                                  <stop offset="0%" stopColor="#2563EB" stopOpacity="0.25" />
-                                  <stop offset="100%" stopColor="#2563EB" stopOpacity="0.0" />
-                                </linearGradient>
-                              </defs>
-                              <path
-                                d="M 30,68 C 70,40 90,40 118,40 C 150,40 175,65 206,65 C 240,65 265,46 294,46 C 330,46 355,26 382,26 C 420,26 445,42 470,42 L 470,105 L 30,105 Z"
-                                fill="url(#widgetSalesGrad)"
-                              />
-                              <path
-                                d="M 30,68 C 70,40 90,40 118,40 C 150,40 175,65 206,65 C 240,65 265,46 294,46 C 330,46 355,26 382,26 C 420,26 445,42 470,42"
-                                fill="none"
-                                stroke="#2563EB"
-                                strokeWidth="2.5"
-                              />
-                              <circle cx="470" cy="42" r="3.5" fill="#2563EB" stroke="#FFFFFF" strokeWidth="2" />
-                            </svg>
-                          </div>
-                          {/* Month ticks */}
-                          <div className="flex justify-between items-center text-[10px] text-slate-400 mt-1 px-3 font-medium">
-                            <span>Jul</span>
-                            <span>Aug</span>
-                            <span>Sep</span>
-                            <span>Oct</span>
-                            <span>Nov</span>
-                            <span>Dec</span>
-                          </div>
-                          <div className="flex justify-between items-center text-[10px] text-slate-400 mt-2 px-1 font-semibold border-t border-slate-50 pt-2">
-                            <span>Jul: Rp 1.480.000.000</span>
-                            <span className="text-blue-600 font-bold">Puncak: Rp 2.290.000.000 (Nov)</span>
-                          </div>
+                          {salesDocs && salesDocs.length > 0 ? (
+                            <div>
+                              <div className="relative h-32 w-full pt-1">
+                                <svg viewBox="0 0 500 110" className="w-full h-full" preserveAspectRatio="none">
+                                  <defs>
+                                    <linearGradient id="widgetSalesGrad" x1="0" y1="0" x2="0" y2="1">
+                                      <stop offset="0%" stopColor="#2563EB" stopOpacity="0.25" />
+                                      <stop offset="100%" stopColor="#2563EB" stopOpacity="0.0" />
+                                    </linearGradient>
+                                  </defs>
+                                  <path
+                                    d="M 30,68 C 70,40 90,40 118,40 C 150,40 175,65 206,65 C 240,65 265,46 294,46 C 330,46 355,26 382,26 C 420,26 445,42 470,42 L 470,105 L 30,105 Z"
+                                    fill="url(#widgetSalesGrad)"
+                                  />
+                                  <path
+                                    d="M 30,68 C 70,40 90,40 118,40 C 150,40 175,65 206,65 C 240,65 265,46 294,46 C 330,46 355,26 382,26 C 420,26 445,42 470,42"
+                                    fill="none"
+                                    stroke="#2563EB"
+                                    strokeWidth="2.5"
+                                  />
+                                </svg>
+                              </div>
+                              <div className="flex justify-between items-center text-[10px] text-slate-500 mt-2 px-1 font-semibold border-t border-slate-50 pt-2">
+                                <span>Omset: {dispTotalOmset}</span>
+                                <span className="text-blue-600 font-bold">Laba: {dispNetFlow}</span>
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="py-8 text-center text-xs text-slate-400 font-medium">
+                              Belum ada transaksi penjualan yang dicatat.
+                            </div>
+                          )}
                         </div>
                       )}
 
                       {/* Widget 2: Donut Chart (Beban Operasional) */}
-                      {w.variable === 'expenses' && w.chartType === 'donut' && (
-                        <div className="flex items-center justify-around py-1">
-                          {/* SVG Donut */}
-                          <div className="relative h-28 w-28 shrink-0 flex items-center justify-center">
-                            <svg viewBox="0 0 36 36" className="h-full w-full -rotate-90">
-                              {/* Background Circle */}
-                              <circle cx="18" cy="18" r="14" fill="none" stroke="#F1F5F9" strokeWidth="4.5" />
-                              {/* 83% Promosi/Iklan (Cyan/Blue) */}
-                              <circle
-                                cx="18" cy="18" r="14" fill="none"
-                                stroke="#0284C7" strokeWidth="4.5"
-                                strokeDasharray="73 100" strokeDashoffset="0"
-                              />
-                              {/* 13% EMKL (Emerald) */}
-                              <circle
-                                cx="18" cy="18" r="14" fill="none"
-                                stroke="#10B981" strokeWidth="4.5"
-                                strokeDasharray="11 100" strokeDashoffset="-73"
-                              />
-                              {/* 2% Contoh (Amber) */}
-                              <circle
-                                cx="18" cy="18" r="14" fill="none"
-                                stroke="#F59E0B" strokeWidth="4.5"
-                                strokeDasharray="3 100" strokeDashoffset="-84"
-                              />
-                            </svg>
-                            <div className="absolute text-center">
-                              <span className="text-[10px] text-slate-400 uppercase font-bold block">TOTAL</span>
-                              <span className="text-xs font-black text-slate-800 block">100%</span>
-                            </div>
-                          </div>
-
-                          {/* Legend list matching screenshot */}
-                          <div className="space-y-1.5 text-[11px] text-slate-600">
-                            <div className="flex items-center justify-between gap-3">
-                              <div className="flex items-center gap-1.5">
-                                <span className="h-2 w-2 rounded-full bg-[#0284C7]" />
-                                <span>Biaya Promosi / Iklan</span>
+                      {w.variable === 'expenses' && (
+                        <div>
+                          {expenses && expenses.length > 0 ? (
+                            <div className="flex items-center justify-around py-1">
+                              <div className="relative h-28 w-28 shrink-0 flex items-center justify-center">
+                                <svg viewBox="0 0 36 36" className="h-full w-full -rotate-90">
+                                  <circle cx="18" cy="18" r="14" fill="none" stroke="#F1F5F9" strokeWidth="4.5" />
+                                  <circle
+                                    cx="18" cy="18" r="14" fill="none"
+                                    stroke="#0284C7" strokeWidth="4.5"
+                                    strokeDasharray="100 100" strokeDashoffset="0"
+                                  />
+                                </svg>
+                                <div className="absolute text-center">
+                                  <span className="text-[10px] text-slate-400 uppercase font-bold block">TOTAL</span>
+                                  <span className="text-xs font-black text-slate-800 block">100%</span>
+                                </div>
                               </div>
-                              <span className="font-bold text-slate-900">83%</span>
-                            </div>
-                            <div className="flex items-center justify-between gap-3">
-                              <div className="flex items-center gap-1.5">
-                                <span className="h-2 w-2 rounded-full bg-[#10B981]" />
-                                <span>Jasa EMKL / Metering</span>
+                              <div className="space-y-1.5 text-[11px] text-slate-600">
+                                <div className="flex items-center justify-between gap-3">
+                                  <div className="flex items-center gap-1.5">
+                                    <span className="h-2 w-2 rounded-full bg-[#0284C7]" />
+                                    <span>Beban Operasional</span>
+                                  </div>
+                                  <span className="font-bold text-slate-900">{dispExpenses}</span>
+                                </div>
                               </div>
-                              <span className="font-bold text-slate-900">13%</span>
                             </div>
-                            <div className="flex items-center justify-between gap-3">
-                              <div className="flex items-center gap-1.5">
-                                <span className="h-2 w-2 rounded-full bg-[#F59E0B]" />
-                                <span>Biaya Contoh</span>
-                              </div>
-                              <span className="font-bold text-slate-900">2%</span>
+                          ) : (
+                            <div className="py-8 text-center text-xs text-slate-400 font-medium">
+                              Belum ada catatan beban operasional.
                             </div>
-                            <div className="flex items-center justify-between gap-3">
-                              <div className="flex items-center gap-1.5">
-                                <span className="h-2 w-2 rounded-full bg-purple-500" />
-                                <span>Listrik & Utilitas Pabrik</span>
-                              </div>
-                              <span className="font-bold text-slate-900">1%</span>
-                            </div>
-                            <div className="flex items-center justify-between gap-3">
-                              <div className="flex items-center gap-1.5">
-                                <span className="h-2 w-2 rounded-full bg-rose-500" />
-                                <span>Beban Operasional Lain</span>
-                              </div>
-                              <span className="font-bold text-slate-900">1%</span>
-                            </div>
-                          </div>
+                          )}
                         </div>
                       )}
 
@@ -1514,10 +1576,10 @@ export default function Dashboard() {
                       {w.variable === 'aging_ar' && (
                         <div className="space-y-3 pt-1">
                           {[
-                            { label: '0 – 30 Hari (Lancar)', amount: 'Rp 4.406.085.700', pct: 100, barColor: 'bg-blue-600' },
-                            { label: '31 – 60 Hari (Perhatian)', amount: 'Rp 0', pct: 0, barColor: 'bg-amber-400' },
-                            { label: '61 – 90 Hari (Peringatan)', amount: 'Rp 0', pct: 0, barColor: 'bg-rose-400' },
-                            { label: '> 90 Hari (Kritis)', amount: 'Rp 0', pct: 0, barColor: 'bg-rose-600' }
+                            { label: '0 – 30 Hari (Lancar)', amount: dispIncomeBelumLunas, pct: incomeBelumLunasIDR > 0 ? 100 : 0, barColor: 'bg-blue-600' },
+                            { label: '31 – 60 Hari (Perhatian)', amount: formatVal(0, selectedCurrency), pct: 0, barColor: 'bg-amber-400' },
+                            { label: '61 – 90 Hari (Peringatan)', amount: formatVal(0, selectedCurrency), pct: 0, barColor: 'bg-rose-400' },
+                            { label: '> 90 Hari (Kritis)', amount: formatVal(0, selectedCurrency), pct: 0, barColor: 'bg-rose-600' }
                           ].map((item, i) => (
                             <div key={i} className="space-y-1">
                               <div className="flex items-center justify-between text-xs">
@@ -1534,53 +1596,61 @@ export default function Dashboard() {
 
                       {/* Widget 4: Plafon Anggaran vs Realisasi */}
                       {w.variable === 'budget' && (
-                        <div className="space-y-3.5 pt-1">
-                          <div className="space-y-1">
-                            <div className="flex items-center justify-between text-xs">
-                              <span className="text-slate-700 font-medium">Beban Gaji & Upah Tenaga Kerja Pro...</span>
-                              <span className="font-bold text-slate-900">Rp 99.000.000 / Rp 126.000.000 (79%)</span>
+                        <div>
+                          {budgetRows && budgetRows.length > 0 ? (
+                            <div className="space-y-3.5 pt-1">
+                              {budgetRows.slice(0, 2).map((b, i) => {
+                                const limit = Number(b.limit || b.nominal) || 1;
+                                const spent = Number(b.spent || b.realisasi) || 0;
+                                const pct = Math.min(100, Math.round((spent / limit) * 100));
+                                return (
+                                  <div key={i} className="space-y-1">
+                                    <div className="flex items-center justify-between text-xs">
+                                      <span className="text-slate-700 font-medium truncate max-w-[200px]">{b.category || b.name}</span>
+                                      <span className="font-bold text-slate-900">{formatVal(spent, selectedCurrency)} / {formatVal(limit, selectedCurrency)} ({pct}%)</span>
+                                    </div>
+                                    <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
+                                      <div style={{ width: `${pct}%` }} className="h-full bg-amber-500 rounded-full" />
+                                    </div>
+                                  </div>
+                                );
+                              })}
                             </div>
-                            <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
-                              <div style={{ width: '79%' }} className="h-full bg-amber-500 rounded-full" />
+                          ) : (
+                            <div className="py-8 text-center text-xs text-slate-400 font-medium">
+                              Belum ada plafon anggaran yang diset.
                             </div>
-                          </div>
-
-                          <div className="space-y-1">
-                            <div className="flex items-center justify-between text-xs">
-                              <span className="text-slate-700 font-medium">Beban Listrik, Gas & Utilitas Pabrik</span>
-                              <span className="font-bold text-slate-900">Rp 35.000.000 / Rp 55.000.000 (64%)</span>
-                            </div>
-                            <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
-                              <div style={{ width: '64%' }} className="h-full bg-emerald-500 rounded-full" />
-                            </div>
-                          </div>
+                          )}
                         </div>
                       )}
 
                       {/* Widget 5: Output Produksi KPI */}
-                      {w.variable === 'production' && (
-                        <div className="flex items-center justify-between py-2">
-                          <div>
-                            <div className="num text-3xl font-black text-slate-900 tracking-tight">
-                              1.150 Unit
+                      {w.variable === 'production' && (() => {
+                        const totalUnits = (workOrders || []).reduce((sum, wo) => sum + (Number(wo.targetQty || wo.qty) || 0), 0);
+                        const activeWo = (workOrders || []).filter(wo => wo.status === 'Berjalan' || wo.status === 'In Progress').length;
+                        const doneWo = (workOrders || []).filter(wo => wo.status === 'Selesai' || wo.status === 'Completed').length;
+                        return (
+                          <div className="flex items-center justify-between py-2">
+                            <div>
+                              <div className="num text-3xl font-black text-slate-900 tracking-tight">
+                                {totalUnits.toLocaleString('id-ID')} Unit
+                              </div>
+                              <div className="mt-1 text-xs text-slate-400">
+                                Total output produksi dari {activeWo} Work Order aktif
+                              </div>
+                              <div className="mt-3 flex items-center gap-3 text-xs font-semibold text-slate-600">
+                                <span>Work Orders: <strong className="text-blue-600">{activeWo} Aktif</strong> / {doneWo} Selesai</span>
+                              </div>
                             </div>
-                            <div className="mt-1 text-xs text-slate-400">
-                              Total output produksi dari 2 Work Order aktif
-                            </div>
-                            <div className="mt-3 flex items-center gap-3 text-xs font-semibold text-slate-600">
-                              <span>Total Target: <strong>1.500 Unit</strong></span>
-                              <span>•</span>
-                              <span>Work Orders: <strong className="text-blue-600">1 Aktif</strong> / 13 Selesai</span>
-                            </div>
-                          </div>
 
-                          <div className="text-right">
-                            <span className="inline-block px-3 py-1 rounded-full text-xs font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
-                              Target 77%
-                            </span>
+                            <div className="text-right">
+                              <span className="inline-block px-3 py-1 rounded-full text-xs font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
+                                Target {totalUnits > 0 ? '100%' : '0%'}
+                              </span>
+                            </div>
                           </div>
-                        </div>
-                      )}
+                        );
+                      })()}
                     </div>
                   </div>
 
@@ -1763,6 +1833,17 @@ export default function Dashboard() {
             <form
               onSubmit={(e) => {
                 e.preventDefault();
+                const newNote = {
+                  id: `note-${Date.now()}`,
+                  title: noteTitle,
+                  content: noteContent,
+                  severity: noteSeverity || 'Sedang',
+                  type: noteType || 'Catatan Internal',
+                  createdAt: new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }),
+                  author: user?.displayName || 'Carlos Susanto',
+                  completed: false
+                };
+                setPersonalNotes(prev => [...(prev || []), newNote]);
                 setAddNoteOpen(false);
                 notify(`Catatan '${noteTitle}' berhasil disimpan.`);
                 setNoteTitle('');

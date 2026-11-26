@@ -65,149 +65,8 @@ const TASK_TYPES = {
   'Penjualan & Piutang': { label: 'Penjualan & Piutang', badgeClass: 'bg-purple-50 text-purple-700 border-purple-200', dotClass: 'bg-purple-500' }
 };
 
-// Default benchmark tasks matching Gambar 2
-const INITIAL_TASKS = [
-  {
-    id: 'task-011',
-    title: 'Audit & Koreksi Anomali Pembukuan: 1. H...',
-    content: 'Audit & Koreksi Anomali Pembukuan: 1. Hapus/Void 8 duplikasi transaksi Telkom Indonesia (@ Rp 467.000). 2. Hapus 3 duplikasi voucher Love Florist (@ Rp 1.000.000) dan 1 duplikasi PLN Persero (Rp 5.000.000). 3. Eliminasi double entry Pamerindo Indonesia Rp 99.393.840 (hapus EXP-2025-002 agar tidak ganda dengan PO-5703). 4. Verifikasi dan koreksi nama pelanggan pada faktur INV-4746 (Rp 1.906.835.700) yang tertulis \'PT Asia\'.',
-    severity: 'Kritis',
-    type: 'Rekonsiliasi',
-    dueDate: '2026-11-15',
-    completed: false,
-    createdAt: '14 Nov 2026',
-    author: 'Carlos Susanto',
-    assignee: 'Finance & Accounting Staff',
-    relatedDoc: 'EXP-4406, PO-5703, INV-4746, EXP-2025-002'
-  },
-  {
-    id: 'task-001',
-    title: 'Persetujuan PO Mesin Blow Molding MP70D-2 (Ningbo Qiming)',
-    content: 'Otorisasi final DP 30% (USD 37.500) pengadaan mesin blow molding botol agrokimia dari Ningbo Qiming Machinery. Pastikan dokumen L/C atau TT transfer disetujui Direktur Utama.',
-    severity: 'Kritis',
-    type: 'Persetujuan',
-    dueDate: '2026-11-18',
-    completed: false,
-    createdAt: '13 Nov 2026',
-    author: 'Carlos Susanto',
-    assignee: 'Direktur Utama',
-    relatedDoc: 'PO-2026-004'
-  },
-  {
-    id: 'task-002',
-    title: 'Pelaporan SPT Masa PPN DJP Coretax Periode November',
-    content: 'Rekonsiliasi faktur pajak masukan pembelian resin HDPE vs faktur keluaran distributor botol oli. Siapkan file XML/API Coretax sebelum batas akhir pelaporan.',
-    severity: 'Tinggi',
-    type: 'Perpajakan',
-    dueDate: '2026-11-20',
-    completed: false,
-    createdAt: '13 Nov 2026',
-    author: 'Carlos Susanto',
-    assignee: 'Tax Specialist',
-    relatedDoc: 'PPN-NOV-2026'
-  },
-  {
-    id: 'task-003',
-    title: 'Pembayaran Tagihan Pamerindo (Plastics & Rubber Indonesia 2025)',
-    content: 'Pelunasan invoice sewa space booth pameran JIExpo Kemayoran sebesar Rp 45.000.000. Cek faktur komersial dan potong PPh 23 2%.',
-    severity: 'Tinggi',
-    type: 'Pembayaran',
-    dueDate: '2026-11-22',
-    completed: false,
-    createdAt: '12 Nov 2026',
-    author: 'Finance Manager',
-    assignee: 'Finance Team',
-    relatedDoc: 'PO-2026-002'
-  },
-  {
-    id: 'task-004',
-    title: 'https://www.youtube.com/shorts/6z06GL4nWaA',
-    content: 'https://www.youtube.com/shorts/6z06GL4nWaA',
-    severity: 'Sedang',
-    type: 'Catatan Internal',
-    dueDate: '21 Nov 2026',
-    completed: false,
-    createdAt: '21 Nov 2026',
-    author: 'Carlos Susanto',
-    assignee: 'Semua'
-  },
-  {
-    id: 'task-005',
-    title: 'Rekonsiliasi Selisih Setoran Kas Pabrik BCA Giro',
-    content: 'Verifikasi setoran tunai hasil scrap penjualan afalan plastik Rp 15.000.000 di rekening Giro BCA operasional dengan bukti setor kasir pabrik Cikarang.',
-    severity: 'Sedang',
-    type: 'Rekonsiliasi',
-    dueDate: '2026-11-16',
-    completed: false,
-    createdAt: '11 Nov 2026',
-    author: 'Accounting Staff',
-    assignee: 'Accounting Staff',
-    relatedDoc: 'MUT-2026-001'
-  },
-  {
-    id: 'task-006',
-    title: 'Restock & PO Cadangan Biji Plastik HDPE Film Grade',
-    content: 'Stok HDPE film grade di gudang Cikarang tersisa 3.500 kg (safety stock 5.000 kg). Buat PO repeat order 10 ton ke PT Duta Polimer Indonesia untuk batch produksi akhir tahun.',
-    severity: 'Sedang',
-    type: 'Operasional Pabrik',
-    dueDate: '2026-11-25',
-    completed: true,
-    createdAt: '14 Nov 2026',
-    author: 'Staff Gudang',
-    assignee: 'Procurement',
-    relatedDoc: 'REQ-STK-089'
-  },
-  {
-    id: 'task-007',
-    title: 'Review Kontrak Logistik EMKL Impor Tanjung Priok',
-    content: 'Evaluasi tagihan demurrage dan handling fee forwarder PT Samudera Lautan Perkasa untuk rute pengapalan masterbatch dari Ningbo & Shanghai.',
-    severity: 'Rendah',
-    type: 'Catatan Internal',
-    dueDate: '2026-11-30',
-    completed: false,
-    createdAt: '10 Nov 2026',
-    author: 'Carlos Susanto',
-    assignee: 'Carlos Susanto',
-    relatedDoc: 'CTR-EMKL-2026'
-  },
-  {
-    id: 'task-008',
-    title: 'Investigasi & telusuri rincian pengeluaran operasional pabrik atas transaksi Kas Masuk Rp 200.000.000',
-    content: 'Investigasi & telusuri rincian pengeluaran operasional pabrik atas transaksi Kas Masuk Rp 200.000.000 (tgl 2026-01-20: \'Transfer Kas Masuk dari Rekening Giro BCA untuk Operasional Pabrik\') karena belum ada dokumen pembukuan/faktur beban operasional yang cocok di rekonsiliasi.',
-    severity: 'Sedang',
-    type: 'Catatan Internal',
-    dueDate: '14 Nov 2026',
-    completed: false,
-    createdAt: '14 Nov 2026',
-    author: 'Carlos Susanto',
-    assignee: 'Semua'
-  },
-  {
-    id: 'task-009',
-    title: 'Follow up penagihan piutang penjualan ke PT Sinar Bintang Poly (INV-2026-1212) senilai Rp 1.750.000.000 (Jatuh tempo 08 Jan 2027).',
-    content: 'Follow up penagihan piutang penjualan ke PT Sinar Bintang Poly (INV-2026-1212) senilai Rp 1.750.000.000 (Jatuh tempo 08 Jan 2027).',
-    severity: 'Sedang',
-    type: 'Catatan Internal',
-    dueDate: '14 Nov 2026',
-    completed: false,
-    createdAt: '14 Nov 2026',
-    author: 'Nala AI',
-    assignee: 'Semua',
-    relatedDoc: 'INV-2026-1212'
-  },
-  {
-    id: 'task-010',
-    title: 'Follow up dan selesaikan pembayaran tagihan belum lunas: Pamerindo Indonesia (Rp 99.393.840) dan tagihan internet Telkom Indonesia.',
-    content: 'Follow up dan selesaikan pembayaran tagihan belum lunas: Pamerindo Indonesia (Rp 99.393.840) dan tagihan internet Telkom Indonesia.',
-    severity: 'Sedang',
-    type: 'Catatan Internal',
-    dueDate: '14 Nov 2026',
-    completed: false,
-    createdAt: '14 Nov 2026',
-    author: 'Nala AI',
-    assignee: 'Semua'
-  }
-];
+// Initial tasks initialized empty for clean manual input
+const INITIAL_TASKS = [];
 
 export default function Tugas() {
   const {
@@ -247,12 +106,9 @@ export default function Tugas() {
   const [selectedTask, setSelectedTask] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
 
-  // Use tasks from context or fallback to benchmark list
+  // Use tasks directly from user's personal notes state (clean manual input)
   const tasksList = useMemo(() => {
-    if (personalNotes && personalNotes.length >= 8) {
-      return personalNotes;
-    }
-    return INITIAL_TASKS;
+    return Array.isArray(personalNotes) ? personalNotes : [];
   }, [personalNotes]);
 
   // Document link extractor helper

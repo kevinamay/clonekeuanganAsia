@@ -8,38 +8,24 @@ const AppContext = createContext();
 const DB_PREFIX = 'finance_data';
 
 export const DEFAULT_FULFILLMENTS = [];
+export const DEFAULT_BANK_ACCOUNTS = [];
+export const DEFAULT_COA_ACCOUNTS = [];
 
-export const DEFAULT_BANK_ACCOUNTS = [
-  { id: "acc-001", bankName: "Bank Central Asia (BCA)", accountNumber: "883-092-1120", accountHolder: "PT Asia Plastik Indonesia", type: "Operasional IDR", balance: 0, currency: "IDR", status: "Aktif", color: "#00529C", logo: "bca" },
-  { id: "acc-002", bankName: "Bank Mandiri", accountNumber: "132-00-9821034-1", accountHolder: "PT Asia Plastik Indonesia", type: "Valas USD", balance: 0, currency: "USD", status: "Aktif", color: "#003366", logo: "mandiri" },
-  { id: "acc-003", bankName: "Bank CIMB Niaga", accountNumber: "8001-4490-2100", accountHolder: "PT Asia Plastik Indonesia", type: "Payroll Karyawan", balance: 0, currency: "IDR", status: "Aktif", color: "#7A1C1C", logo: "cimb" },
-  { id: "acc-004", bankName: "Bank Rakyat Indonesia (BRI)", accountNumber: "0341-01-001928-30-4", accountHolder: "PT Asia Plastik Indonesia", type: "Escrow Tender", balance: 0, currency: "IDR", status: "Aktif", color: "#00529C", logo: "bri" }
-];
-
-export const DEFAULT_COA_ACCOUNTS = [
-  { code: "1-1001", name: "Kas Operasional", category: "Kas & Bank", balance: 0, normalBalance: 0, type: "Debit" },
-  { code: "1-1002", name: "Bank BCA Operasional (IDR)", category: "Kas & Bank", balance: 0, normalBalance: 0, type: "Debit" },
-  { code: "1-1003", name: "Bank Mandiri Valas (USD)", category: "Kas & Bank", balance: 0, normalBalance: 0, type: "Debit" },
-  { code: "1-1004", name: "Bank CIMB Niaga Payroll", category: "Kas & Bank", balance: 0, normalBalance: 0, type: "Debit" },
-  { code: "1-1005", name: "Bank BRI Escrow Pameran", category: "Kas & Bank", balance: 0, normalBalance: 0, type: "Debit" },
-  { code: "1-1101", name: "Piutang Usaha (Trade Receivables)", category: "Piutang", balance: 0, normalBalance: 0, type: "Debit" },
-  { code: "1-1201", name: "Persediaan Biji Plastik HDPE", category: "Persediaan", balance: 0, normalBalance: 0, type: "Debit" },
-  { code: "1-1202", name: "Persediaan Biji Plastik PP & PET", category: "Persediaan", balance: 0, normalBalance: 0, type: "Debit" },
-  { code: "1-1301", name: "PPN Masukan (DJP Coretax)", category: "Pajak", balance: 0, normalBalance: 0, type: "Debit" },
-  { code: "1-1401", name: "Aset Tetap - Mesin Extrusion Blow Molding", category: "Aset Tetap", balance: 0, normalBalance: 0, type: "Debit" },
-  { code: "1-1402", name: "Aset Tetap - Kendaraan Operasional", category: "Aset Tetap", balance: 0, normalBalance: 0, type: "Debit" },
-  { code: "2-2001", name: "Hutang Usaha Lokal (Trade Payables)", category: "Kewajiban", balance: 0, normalBalance: 0, type: "Kredit" },
-  { code: "2-2002", name: "Hutang Usaha Valas Impor (USD)", category: "Kewajiban", balance: 0, normalBalance: 0, type: "Kredit" },
-  { code: "2-2101", name: "PPN Keluaran Terutang", category: "Kewajiban", balance: 0, normalBalance: 0, type: "Kredit" },
-  { code: "3-3001", name: "Modal Disetor Pemilik", category: "Ekuitas", balance: 0, normalBalance: 0, type: "Kredit" },
-  { code: "3-3002", name: "Laba Ditahan (Retained Earnings)", category: "Ekuitas", balance: 0, normalBalance: 0, type: "Kredit" },
-  { code: "4-4001", name: "Pendapatan Penjualan Produk Plastik", category: "Pendapatan", balance: 0, normalBalance: 0, type: "Kredit" },
-  { code: "5-5001", name: "Beban Pokok Penjualan (HPP)", category: "Beban Pokok Penjualan", balance: 0, normalBalance: 0, type: "Debit" },
-  { code: "6-6001", name: "Beban Promosi & Pameran Industri", category: "Beban", balance: 0, normalBalance: 0, type: "Debit" },
-  { code: "6-6002", name: "Beban Freight & EMKL Logistik Impor", category: "Beban", balance: 0, normalBalance: 0, type: "Debit" },
-  { code: "6-6003", name: "Beban Listrik & Utilitas Pabrik", category: "Beban", balance: 0, normalBalance: 0, type: "Debit" },
-  { code: "6-6004", name: "Beban Gaji & Upah Karyawan", category: "Beban", balance: 0, normalBalance: 0, type: "Debit" }
-];
+const DB_VERSION = 'v3_scratch_clean';
+if (typeof window !== 'undefined') {
+  try {
+    if (localStorage.getItem('asia_plastic_db_ver') !== DB_VERSION) {
+      Object.keys(localStorage).forEach((key) => {
+        if (key.startsWith('asia_plastic_')) {
+          localStorage.removeItem(key);
+        }
+      });
+      localStorage.setItem('asia_plastic_db_ver', DB_VERSION);
+    }
+  } catch (e) {
+    console.warn('[Cache clear warning]', e);
+  }
+}
 
 const loadLocal = (key, fallback) => {
   try {
@@ -296,7 +282,7 @@ export function AppProvider({ children }) {
       }
     };
 
-    bindCollection('bank_accounts', setBankAccounts, DEFAULT_BANK_ACCOUNTS);
+    bindCollection('bank_accounts', setBankAccounts, []);
     bindCollection('sales_docs', setSalesDocs, []);
     bindCollection('purchase_docs', setPurchaseDocs, []);
     bindCollection('expenses', setExpenses, []);
@@ -306,7 +292,7 @@ export function AppProvider({ children }) {
     bindCollection('vendors', setVendors, []);
     bindCollection('work_orders', setWorkOrders, []);
     bindCollection('tax_records', setTaxRecords, []);
-    bindCollection('coa_accounts', setCoaAccounts, DEFAULT_COA_ACCOUNTS);
+    bindCollection('coa_accounts', setCoaAccounts, []);
     bindCollection('personal_notes', setPersonalNotes, []);
     bindCollection('bank_rules', setBankRules, []);
     bindCollection('giro_docs', setGiroDocs, []);
