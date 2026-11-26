@@ -33,6 +33,8 @@ export function AppProvider({ children }) {
   const [taxRecords, setTaxRecords] = useState(() => seedData.s || []);
   const [coaAccounts, setCoaAccounts] = useState(() => seedData.j || []);
   const [personalNotes, setPersonalNotes] = useState(() => seedData.H || []);
+  const [bankRules, setBankRules] = useState(() => seedData.J || []);
+  const [giroDocs, setGiroDocs] = useState(() => seedData.o || []);
   const [journalEntries, setJournalEntries] = useState([]);
   const [fixedAssets, setFixedAssets] = useState([]);
   const [auditLogs, setAuditLogs] = useState([]);
@@ -148,6 +150,22 @@ export function AppProvider({ children }) {
     });
   }, [syncToRtdb]);
 
+  const updateBankRules = useCallback((val) => {
+    setBankRules((prev) => {
+      const next = typeof val === 'function' ? val(prev) : val;
+      syncToRtdb('bank_rules', next);
+      return next;
+    });
+  }, [syncToRtdb]);
+
+  const updateGiroDocs = useCallback((val) => {
+    setGiroDocs((prev) => {
+      const next = typeof val === 'function' ? val(prev) : val;
+      syncToRtdb('giro_docs', next);
+      return next;
+    });
+  }, [syncToRtdb]);
+
   // Two-way Realtime Database Listener for all finance_data collections
   useEffect(() => {
     const unsubscribers = [];
@@ -196,6 +214,8 @@ export function AppProvider({ children }) {
     bindCollection('tax_records', setTaxRecords, seedData.s);
     bindCollection('coa_accounts', setCoaAccounts, seedData.j);
     bindCollection('personal_notes', setPersonalNotes, seedData.H);
+    bindCollection('bank_rules', setBankRules, seedData.J);
+    bindCollection('giro_docs', setGiroDocs, seedData.o);
     bindCollection('journal_entries', setJournalEntries, []);
     bindCollection('fixed_assets', setFixedAssets, []);
     bindCollection('audit_logs', setAuditLogs, []);
@@ -284,6 +304,10 @@ export function AppProvider({ children }) {
       setCoaAccounts: updateCoaAccounts,
       personalNotes,
       setPersonalNotes: updatePersonalNotes,
+      bankRules,
+      setBankRules: updateBankRules,
+      giroDocs,
+      setGiroDocs: updateGiroDocs,
       journalEntries,
       fixedAssets,
       auditLogs,
