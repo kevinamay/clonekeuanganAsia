@@ -5,6 +5,88 @@ import { ref, onValue, set } from 'firebase/database';
 
 const AppContext = createContext();
 
+export const DEFAULT_FULFILLMENTS = [
+  {
+    id: "ful-spx-002",
+    orderNumber: "SPX002",
+    partyName: "Polres",
+    type: "Penjualan",
+    date: "2026-11-15",
+    eta: "2026-11-17",
+    courier: "Armada Truk Internal",
+    total: 5000000,
+    status: "Sedang Diproses",
+    itemsDescription: "Traffic Cone 10 pcs (Repeat Order)",
+    warehouse: "Surabaya"
+  },
+  {
+    id: "ful-spx-001",
+    orderNumber: "SPX_001",
+    partyName: "Polres",
+    type: "Penjualan",
+    date: "2026-11-15",
+    eta: "2026-11-17",
+    courier: "Armada Truk Internal",
+    total: 5000000,
+    status: "Sedang Diproses",
+    itemsDescription: "Cone 10 biji",
+    warehouse: "Gudang Surabaya"
+  },
+  {
+    id: "ful-001",
+    orderNumber: "DO-2026-001",
+    partyName: "PT Yoewono Plastik Sejahtera",
+    type: "Penjualan",
+    date: "2026-11-13",
+    eta: "2026-11-15",
+    courier: "Armada Truk Internal Asia Plastik (B 9821 T)",
+    total: 83250000,
+    status: "Sedang Dikirim",
+    itemsDescription: "500 Roll Kantong Plastik Roll HDPE 40x60",
+    warehouse: "Gudang Cikarang"
+  },
+  {
+    id: "ful-002",
+    orderNumber: "DO-2026-002",
+    partyName: "CV Makmur Perkasa Plastindo",
+    type: "Penjualan",
+    date: "2026-11-14",
+    eta: "2026-11-16",
+    courier: "Dakota Cargo Express",
+    trackingNumber: "DKT-99210-JKT",
+    total: 138750000,
+    status: "Selesai",
+    itemsDescription: "1.000 Roll Plastik Lembaran PP 0.05mm",
+    warehouse: "Gudang Surabaya"
+  },
+  {
+    id: "ful-004",
+    orderNumber: "DO-2026-003",
+    partyName: "PT Surya Mas Packindo",
+    type: "Penjualan",
+    date: "2026-11-10",
+    eta: "2026-11-11",
+    courier: "Armada Truk Internal",
+    total: 45000000,
+    status: "Selesai",
+    itemsDescription: "300 Roll Plastik Cor LDPE Rekondisi",
+    warehouse: "Gudang Bandung"
+  },
+  {
+    id: "ful-003",
+    orderNumber: "PO-RECV-001",
+    partyName: "PT Chandra Asri Petrochemical Tbk",
+    type: "Pembelian",
+    date: "2026-11-12",
+    eta: "2026-11-14",
+    courier: "Logistik Tangki Pertamina",
+    total: 249750000,
+    status: "Pesanan Baru",
+    itemsDescription: "15 Ton Biji Plastik HDPE Virgin Granules",
+    warehouse: "Gudang Cikarang"
+  }
+];
+
 export function AppProvider({ children }) {
   const [entityId, setEntityId] = useState('utama');
   const [period, setPeriod] = useState('Nov 2026');
@@ -39,6 +121,7 @@ export function AppProvider({ children }) {
   const [fixedAssets, setFixedAssets] = useState(() => seedData.O || []);
   const [auditLogs, setAuditLogs] = useState([]);
   const [customPopups, setCustomPopups] = useState([]);
+  const [fulfillments, setFulfillments] = useState(() => DEFAULT_FULFILLMENTS);
 
   // Helper to persist collection changes to Firebase RTDB finance_data/
   const syncToRtdb = useCallback((key, data) => {
@@ -174,6 +257,14 @@ export function AppProvider({ children }) {
     });
   }, [syncToRtdb]);
 
+  const updateFulfillments = useCallback((val) => {
+    setFulfillments((prev) => {
+      const next = typeof val === 'function' ? val(prev) : val;
+      syncToRtdb('fulfillments', next);
+      return next;
+    });
+  }, [syncToRtdb]);
+
   // Two-way Realtime Database Listener for all finance_data collections
   useEffect(() => {
     const unsubscribers = [];
@@ -228,6 +319,7 @@ export function AppProvider({ children }) {
     bindCollection('fixed_assets', setFixedAssets, []);
     bindCollection('audit_logs', setAuditLogs, []);
     bindCollection('custom_popups', setCustomPopups, []);
+    bindCollection('fulfillments', setFulfillments, DEFAULT_FULFILLMENTS);
 
     return () => {
       unsubscribers.forEach((unsub) => {
@@ -320,6 +412,8 @@ export function AppProvider({ children }) {
       fixedAssets,
       auditLogs,
       setAuditLogs: updateAuditLogs,
+      fulfillments,
+      setFulfillments: updateFulfillments,
       customPopups
     }}>
       {children}
