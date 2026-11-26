@@ -17,7 +17,8 @@
       "cardNumber": "8223-5000-89",
       "cvv": "321",
       "expDate": "12/28",
-      "purpose": "Giro Utama Pembayaran Supplier & Penerimaan Pelanggan"
+      "purpose": "Giro Utama Pembayaran Supplier & Penerimaan Pelanggan",
+      "balance": 0
     },
     {
       "id": "acc-002",
@@ -32,7 +33,8 @@
       "cashlink": false,
       "lastSync": "14 Nov 2026 10:00 WIB",
       "isFictional": false,
-      "purpose": "Kas Operasional Pabrik & Pengeluaran Kas Kecil"
+      "purpose": "Kas Operasional Pabrik & Pengeluaran Kas Kecil",
+      "balance": 0
     },
     {
       "id": "acc-003",
@@ -51,7 +53,8 @@
       "cardNumber": "141-00-2772799-9",
       "cvv": "554",
       "expDate": "08/27",
-      "purpose": "Rekening Operasional & Pengadaan Purchasing"
+      "purpose": "Rekening Operasional & Pengadaan Purchasing",
+      "balance": 0
     },
     {
       "id": "acc-004",
@@ -67,7 +70,8 @@
       "lastSync": "14 Nov 2026 10:00 WIB",
       "isFictional": true,
       "cardNumber": "8221-8900-01",
-      "purpose": "Rekening Valas Transaksi Impor Mesin USD"
+      "purpose": "Rekening Valas Transaksi Impor Mesin USD",
+      "balance": 0
     },
     {
       "id": "acc-005",
@@ -83,66 +87,13 @@
       "lastSync": "14 Nov 2026 10:00 WIB",
       "isFictional": true,
       "cardNumber": "8221-8900-19",
-      "purpose": "Rekening Valas Impor Mesin Renminbi CNY (7.000 CNY @ Rp 2.267)"
+      "purpose": "Rekening Valas Impor Mesin Renminbi CNY (7.000 CNY @ Rp 2.267)",
+      "balance": 0
     }
   ],
-  "M": [
-    {
-      "id": "mut-rec-001",
-      "date": "2026-11-13",
-      "description": "Setoran Tunai Hasil Penjualan Pabrik Cikarang",
-      "amount": 15000000,
-      "direction": "CR",
-      "status": "Perlu Tinjau",
-      "suggestion": "Setoran Kas Pabrik",
-      "anomalyNote": "Normal"
-    },
-    {
-      "id": "mut-rec-002",
-      "date": "2026-11-13",
-      "description": "Penerimaan Transfer Pelunasan INV-2026-002 CV Makmur Plastik",
-      "amount": 44400000,
-      "direction": "CR",
-      "status": "Terekonsiliasi",
-      "matchedDoc": "INV-2026-002",
-      "suggestion": "Pelunasan Invoice",
-      "anomalyNote": "Cocok 100%"
-    }
-  ],
-  "J": [
-    {
-      "id": "brule-001",
-      "name": "Auto-Match Pelunasan Piutang Invoice",
-      "condition": "Deskripsi mengandung INV-2026",
-      "trigger": "Mutasi Kredit (CR)",
-      "action": "Cocokkan Otomatis ke Faktur Penjualan",
-      "targetAccount": "1-10101 (BCA Giro Operasional)",
-      "active": true
-    },
-    {
-      "id": "brule-002",
-      "name": "Auto-Categorize Beban Utilitas Listrik",
-      "condition": "Deskripsi mengandung PLN",
-      "trigger": "Mutasi Debit (DB)",
-      "action": "Bukukan ke Akun Beban Operasional Kantor",
-      "targetAccount": "6-10002",
-      "active": true
-    }
-  ],
-  "r": [
-    {
-      "account": "Beban Gaji & Upah Tenaga Kerja Produksi",
-      "type": "Beban",
-      "budget": 120000000,
-      "actual": 95000000
-    },
-    {
-      "account": "Beban Listrik, Gas & Utilitas Pabrik",
-      "type": "Beban",
-      "budget": 55000000,
-      "actual": 35000000
-    }
-  ],
+  "M": [],
+  "J": [],
+  "r": [],
   "a": [
     {
       "code": "1-10110",
@@ -161,32 +112,7 @@
       "archived": false
     }
   ],
-  "u": [
-    {
-      "id": "cls-2026-10",
-      "period": "Oktober 2026",
-      "closedAt": "2026-10-31 23:59 WIB",
-      "closedBy": "Carlos Susanto (Owner)",
-      "type": "Bulanan",
-      "netIncome": 42500000,
-      "pph29": 9350000,
-      "retainedEarningsAdded": 33150000,
-      "closingJournalNumber": "JV-CLOSE-2026-10",
-      "status": "Terkunci"
-    },
-    {
-      "id": "cls-2025-12",
-      "period": "Tahun Fiskal 2025",
-      "closedAt": "2025-12-31 23:59 WIB",
-      "closedBy": "Carlos Susanto (Owner)",
-      "type": "Tahunan",
-      "netIncome": 380000000,
-      "pph29": 83600000,
-      "retainedEarningsAdded": 296400000,
-      "closingJournalNumber": "JV-CLOSE-2025-YEAR",
-      "status": "Terkunci"
-    }
-  ],
+  "u": [],
   "V": {
     "showRingkasanTab": true,
     "showPerformaTab": true,
@@ -195,231 +121,8 @@
     "showDashboardInSidebar": true,
     "defaultTab": "ringkasan"
   },
-  "w": [
-    {
-      "id": "cat-001",
-      "sku": "INV-PL-001",
-      "name": "Resin HDPE Film Grade HF7000",
-      "category": "Bahan Baku Plastik",
-      "unit": "Kg",
-      "standardPrice": 20000,
-      "stock": 12500,
-      "minStock": 5000,
-      "defaultVendor": "PT Duta Polimer Indonesia",
-      "description": "Biji plastik virgin murni untuk kantong kresek & kantong sampah high strength",
-      "status": "Tersedia",
-      "updatedAt": "2026-11-13"
-    },
-    {
-      "id": "cat-002",
-      "sku": "INV-PL-002",
-      "name": "Resin PP Homopolymer H1500",
-      "category": "Bahan Baku Plastik",
-      "unit": "Kg",
-      "standardPrice": 21500,
-      "stock": 8200,
-      "minStock": 3000,
-      "defaultVendor": "PT Chandra Asri Petrochemical Tbk",
-      "description": "Resin polipropilena untuk kemasan makanan kaku, tali rafia, dan lembaran",
-      "status": "Tersedia",
-      "updatedAt": "2026-11-13"
-    },
-    {
-      "id": "cat-003",
-      "sku": "INV-PL-003",
-      "name": "Resin LLDPE Linear Film Grade 0209AA",
-      "category": "Bahan Baku Plastik",
-      "unit": "Kg",
-      "standardPrice": 22000,
-      "stock": 1400,
-      "minStock": 2500,
-      "defaultVendor": "PT Duta Polimer Indonesia",
-      "description": "Resin fleksibilitas tinggi untuk stretch film & lapisan laminasi plastik",
-      "status": "Menipis",
-      "updatedAt": "2026-11-13"
-    },
-    {
-      "id": "cat-004",
-      "sku": "INV-AD-001",
-      "name": "Masterbatch Putih Titanium TiO2 60%",
-      "category": "Additive & Pewarna",
-      "unit": "Kg",
-      "standardPrice": 48000,
-      "stock": 450,
-      "minStock": 200,
-      "defaultVendor": "CV Sinar Jaya Abadi Plastik",
-      "description": "Pigmen konsentrat putih opacity tinggi tahan panas blowing extruder",
-      "status": "Tersedia",
-      "updatedAt": "2026-11-13"
-    },
-    {
-      "id": "cat-005",
-      "sku": "INV-AD-002",
-      "name": "Kalsium Karbonat CaCO3 Coating Mesh 1200",
-      "category": "Additive & Pewarna",
-      "unit": "Kg",
-      "standardPrice": 3800,
-      "stock": 15000,
-      "minStock": 4000,
-      "defaultVendor": "CV Sinar Jaya Abadi Plastik",
-      "description": "Bahan pengisi filler kalsium mikro untuk kestabilan cetak plastik",
-      "status": "Tersedia",
-      "updatedAt": "2026-11-13"
-    },
-    {
-      "id": "cat-006",
-      "sku": "INV-PK-001",
-      "name": "Karung Sak Woven PP 50 Kg Uk. 60x100",
-      "category": "Kemasan & Packaging",
-      "unit": "Pcs",
-      "standardPrice": 3200,
-      "stock": 3500,
-      "minStock": 1000,
-      "defaultVendor": "PT Mitra Kemasan Pratama",
-      "description": "Kemasan sak luar produk biji plastik daur ulang siap kirim",
-      "status": "Tersedia",
-      "updatedAt": "2026-11-13"
-    },
-    {
-      "id": "cat-007",
-      "sku": "INV-SP-001",
-      "name": "Heater Band Keramik Extruder 80x100mm",
-      "category": "Sparepart & Mesin",
-      "unit": "Pcs",
-      "standardPrice": 420000,
-      "stock": 2,
-      "minStock": 5,
-      "defaultVendor": "Bengkel Mesin Teknik Mandiri",
-      "description": "Pemanas keramik laras silinder extruder 220V 1200 Watt",
-      "status": "Menipis",
-      "updatedAt": "2026-11-13"
-    },
-    {
-      "id": "cat-008",
-      "sku": "INV-UT-001",
-      "name": "Oli Hidrolik Industri ISO VG 68",
-      "category": "Utilitas & Operasional",
-      "unit": "Drum",
-      "standardPrice": 4850000,
-      "stock": 0,
-      "minStock": 2,
-      "defaultVendor": "PT Sumber Pelumas Nusantara",
-      "description": "Pelumas sistem hidrolik mesin crusher & press (209 Liter/Drum)",
-      "status": "Habis",
-      "updatedAt": "2026-11-13"
-    }
-  ],
-  "H": [
-    {
-      "id": "task-001",
-      "title": "Persetujuan PO Mesin Blow Molding MP70D-2 (Ningbo Qiming)",
-      "content": "Otorisasi final DP 30% (USD 37.500) pengadaan mesin blow molding botol agrokimia dari Ningbo Qiming Machinery. Pastikan dokumen L/C atau TT transfer disetujui Direktur Utama.",
-      "severity": "Kritis",
-      "type": "Persetujuan",
-      "dueDate": "2026-11-18",
-      "completed": false,
-      "createdAt": "13 Nov 2026",
-      "author": "Carlos Susanto",
-      "assignee": "Direktur Utama",
-      "relatedDoc": "PO-2026-004",
-      "tags": [
-        "Investasi",
-        "Mesin",
-        "Q4"
-      ]
-    },
-    {
-      "id": "task-002",
-      "title": "Pelaporan SPT Masa PPN DJP Coretax Periode November",
-      "content": "Rekonsiliasi faktur pajak masukan pembelian resin HDPE vs faktur keluaran distributor botol oli. Siapkan file XML/API Coretax sebelum batas akhir pelaporan.",
-      "severity": "Tinggi",
-      "type": "Perpajakan",
-      "dueDate": "2026-11-20",
-      "completed": false,
-      "createdAt": "13 Nov 2026",
-      "author": "Carlos Susanto",
-      "assignee": "Tax Specialist",
-      "relatedDoc": "PPN-NOV-2026",
-      "tags": [
-        "DJP",
-        "Coretax",
-        "Pajak"
-      ]
-    },
-    {
-      "id": "task-003",
-      "title": "Pembayaran Tagihan Pamerindo (Plastics & Rubber Indonesia 2025)",
-      "content": "Pelunasan invoice sewa space booth pameran JIExpo Kemayoran sebesar Rp 45.000.000. Cek faktur komersial dan potong PPh 23 2%.",
-      "severity": "Tinggi",
-      "type": "Pembayaran",
-      "dueDate": "2026-11-22",
-      "completed": false,
-      "createdAt": "12 Nov 2026",
-      "author": "Finance Manager",
-      "assignee": "Finance Team",
-      "relatedDoc": "PO-2026-002",
-      "tags": [
-        "Marketing",
-        "Vendor",
-        "Hutang"
-      ]
-    },
-    {
-      "id": "task-004",
-      "title": "Rekonsiliasi Selisih Setoran Kas Pabrik BCA Giro",
-      "content": "Verifikasi setoran tunai hasil scrap penjualan afalan plastik Rp 15.000.000 di rekening Giro BCA operasional dengan bukti setor kasir pabrik Cikarang.",
-      "severity": "Sedang",
-      "type": "Rekonsiliasi",
-      "dueDate": "2026-11-16",
-      "completed": true,
-      "completedAt": "14 Nov 2026 11:20",
-      "createdAt": "11 Nov 2026",
-      "author": "Accounting Staff",
-      "assignee": "Accounting Staff",
-      "relatedDoc": "MUT-2026-001",
-      "tags": [
-        "Bank BCA",
-        "Kasir",
-        "Scrap"
-      ]
-    },
-    {
-      "id": "task-005",
-      "title": "Restock & PO Cadangan Biji Plastik HDPE Film Grade",
-      "content": "Stok HDPE film grade di gudang Cikarang tersisa 3.500 kg (safety stock 5.000 kg). Buat PO repeat order 10 ton ke PT Duta Polimer Indonesia untuk batch produksi akhir tahun.",
-      "severity": "Sedang",
-      "type": "Operasional Pabrik",
-      "dueDate": "2026-11-25",
-      "completed": false,
-      "createdAt": "14 Nov 2026",
-      "author": "Staff Gudang",
-      "assignee": "Procurement",
-      "relatedDoc": "REQ-STK-089",
-      "tags": [
-        "HDPE",
-        "Gudang",
-        "Produksi"
-      ]
-    },
-    {
-      "id": "task-006",
-      "title": "Review Kontrak Logistik EMKL Impor Tanjung Priok",
-      "content": "Evaluasi tagihan demurrage dan handling fee forwarder PT Samudera Lautan Perkasa untuk rute pengapalan masterbatch dari Ningbo & Shanghai.",
-      "severity": "Rendah",
-      "type": "Catatan Internal",
-      "dueDate": "2026-11-30",
-      "completed": false,
-      "createdAt": "10 Nov 2026",
-      "author": "Carlos Susanto",
-      "assignee": "Carlos Susanto",
-      "relatedDoc": "CTR-EMKL-2026",
-      "tags": [
-        "Logistik",
-        "Kontrak",
-        "EMKL"
-      ]
-    }
-  ],
+  "w": [],
+  "H": [],
   "p": [
     {
       "id": "e1",
@@ -440,96 +143,9 @@
       "city": "Jakarta Selatan, DKI"
     }
   ],
-  "x": [
-    {
-      "id": "exp-001",
-      "number": "EXP-2026-001",
-      "date": "2026-11-13",
-      "category": "Beban Operasional Kantor",
-      "payee": "PT PLN (Persero) UID Jaya",
-      "tag": "Pabrik Cikarang",
-      "recurring": "Bulanan",
-      "source": "Mekari Jurnal",
-      "amount": 35000000,
-      "status": "Lunas"
-    },
-    {
-      "id": "exp-002",
-      "number": "EXP-2026-002",
-      "date": "2026-11-13",
-      "category": "Beban Pemeliharaan & Perbaikan",
-      "payee": "CV Tehnik Mesin Perkasa",
-      "tag": "Mesin Blowing 02",
-      "source": "Mekari Jurnal",
-      "amount": 12500000,
-      "status": "Lunas"
-    },
-    {
-      "id": "exp-003",
-      "number": "EXP-2026-003",
-      "date": "2026-11-13",
-      "category": "Beban Perjalanan Dinas & Reimbursement",
-      "payee": "Budi Santoso (Tim Teknisi Mesin Ekstrusi)",
-      "tag": "Pabrik Cikarang",
-      "source": "Mekari Expense",
-      "amount": 6750000,
-      "status": "Butuh Persetujuan"
-    }
-  ],
-  "O": [
-    {
-      "id": "ast-001",
-      "code": "AST-EXT-01",
-      "name": "Mesin Extruder Biji Plastik 75mm T-Die",
-      "category": "Mesin & Peralatan Pabrik",
-      "acquiredDate": "2026-01-15",
-      "cost": 350000000,
-      "method": "Garis Lurus (Straight-Line)",
-      "usefulLifeMonths": 48,
-      "depreciationMonthly": 7291667,
-      "accumDepr": 43750000,
-      "accumulated": 43750000,
-      "bookValue": 306250000,
-      "status": "Aktif"
-    },
-    {
-      "id": "ast-002",
-      "code": "AST-FLK-02",
-      "name": "Forklift Listrik Toyota 3 Ton Gudang",
-      "category": "Kendaraan & Alat Angkut",
-      "acquiredDate": "2026-03-20",
-      "cost": 180000000,
-      "method": "Garis Lurus (Straight-Line)",
-      "usefulLifeMonths": 48,
-      "depreciationMonthly": 3750000,
-      "accumDepr": 22500000,
-      "accumulated": 22500000,
-      "bookValue": 157500000,
-      "status": "Disusutkan Penuh"
-    }
-  ],
-  "o": [
-    {
-      "id": "gr-001",
-      "no": "BG-BCA-98711",
-      "party": "PT Surya Kencana Packindo",
-      "doc": "INV-2026-001",
-      "dueDate": "2026-11-30",
-      "amount": 65000000,
-      "type": "Masuk",
-      "status": "Belum Cair"
-    },
-    {
-      "id": "gr-002",
-      "no": "BG-MDR-44522",
-      "party": "PT Duta Polimer Indonesia",
-      "doc": "PO-2026-001",
-      "dueDate": "2026-11-20",
-      "amount": 35000000,
-      "type": "Keluar",
-      "status": "Cair"
-    }
-  ],
+  "x": [],
+  "O": [],
+  "o": [],
   "N": [
     {
       "name": "Mekari Klikpajak",
@@ -580,414 +196,133 @@
       "sync": "API Terkunci"
     }
   ],
-  "k": [
-    {
-      "id": "jv-001",
-      "number": "JV-2026-001",
-      "date": "2026-11-13",
-      "memo": "Penyetoran Modal Awal Pemilik",
-      "lines": [
-        {
-          "account": "Kas & Bank (BCA Giro)",
-          "debit": 100000000,
-          "credit": 0
-        },
-        {
-          "account": "Modal Disetor Pemilik",
-          "debit": 0,
-          "credit": 100000000
-        }
-      ],
-      "description": "Penyetoran modal pemilik disahkan akuntan",
-      "debitTotal": 100000000,
-      "creditTotal": 100000000,
-      "status": "Posted"
-    },
-    {
-      "id": "jv-002",
-      "number": "JV-2026-002",
-      "date": "2026-11-13",
-      "memo": "Alokasi Beban Penyusutan Mesin Extruder Pabrik",
-      "lines": [
-        {
-          "account": "Beban Penyusutan Mesin",
-          "debit": 8500000,
-          "credit": 0
-        },
-        {
-          "account": "Akumulasi Penyusutan Mesin",
-          "debit": 0,
-          "credit": 8500000
-        }
-      ],
-      "description": "Beban depresiasi mesin bulan berjalan",
-      "debitTotal": 8500000,
-      "creditTotal": 8500000,
-      "status": "Posted"
-    }
-  ],
-  "z": [
-    {
-      "sku": "SKU-HD-001",
-      "name": "Kantong Plastik HDPE Roll 40x60 Transparan",
-      "type": "Barang Jadi",
-      "unit": "Roll",
-      "price": 175000,
-      "wholesalePrice": 145000,
-      "stockJkt": 500,
-      "stockSby": 200,
-      "stockBdg": 150,
-      "rack": "R-01",
-      "batch": "BATCH-2026-A1",
-      "expiry": "-",
-      "reorderMin": 50,
-      "consignment": false
-    },
-    {
-      "sku": "SKU-PP-002",
-      "name": "Plastik Lembaran PP Ketebalan 0.05mm",
-      "type": "Barang Jadi",
-      "unit": "Kg",
-      "price": 35000,
-      "wholesalePrice": 28000,
-      "stockJkt": 800,
-      "stockSby": 500,
-      "stockBdg": 200,
-      "rack": "R-02",
-      "batch": "BATCH-2026-B2",
-      "expiry": "-",
-      "reorderMin": 100,
-      "consignment": false
-    }
-  ],
-  "$": [
-    {
-      "id": "p-001",
-      "number": "PO-2026-001",
-      "type": "Purchase Order",
-      "vendor": "PT Duta Polimer Indonesia",
-      "date": "2026-11-13",
-      "dueDate": "2026-12-13",
-      "warehouse": "Gudang Utama Jakarta",
-      "total": 55500000,
-      "paid": 0,
-      "status": "Belum Dibayar",
-      "description": "Pengadaan rutin biji plastik virgin HDPE film grade untuk line extruder A & B",
-      "items": [
-        {
-          "id": "poi-001",
-          "catalogId": "cat-001",
-          "sku": "INV-PL-001",
-          "name": "Resin HDPE Film Grade HF7000",
-          "category": "Bahan Baku Plastik",
-          "qty": 2500,
-          "unit": "Kg",
-          "price": 20000,
-          "total": 50000000,
-          "notes": "Pengiriman via truk wingbox gudang Jakarta"
-        }
-      ]
-    },
-    {
-      "id": "p-002",
-      "number": "PO-2026-002",
-      "type": "Purchase Order",
-      "vendor": "CV Sinar Jaya Abadi Plastik",
-      "date": "2026-11-13",
-      "dueDate": "2026-11-27",
-      "warehouse": "Gudang Cabang Surabaya",
-      "total": 22200000,
-      "paid": 22200000,
-      "status": "Lunas",
-      "description": "Pewarna masterbatch putih titanium dan kalsium pengisi kemasan",
-      "items": [
-        {
-          "id": "poi-002",
-          "catalogId": "cat-004",
-          "sku": "INV-AD-001",
-          "name": "Masterbatch Putih Titanium TiO2 60%",
-          "category": "Additive & Pewarna",
-          "qty": 300,
-          "unit": "Kg",
-          "price": 48000,
-          "total": 14400000,
-          "notes": "Kemasan sak 25kg dilapisi plastik alufoil"
-        },
-        {
-          "id": "poi-003",
-          "catalogId": "cat-005",
-          "sku": "INV-AD-002",
-          "name": "Kalsium Karbonat CaCO3 Coating Mesh 1200",
-          "category": "Additive & Pewarna",
-          "qty": 1473,
-          "unit": "Kg",
-          "price": 3801.765,
-          "total": 5600000,
-          "notes": "Grade ekstrusi pipa dan kantong"
-        }
-      ]
-    },
-    {
-      "id": "p-003",
-      "number": "PO-2026-003",
-      "type": "Purchase Request",
-      "vendor": "PT Chandra Asri Petrochemical Tbk",
-      "date": "2026-11-13",
-      "dueDate": "2026-11-30",
-      "warehouse": "Gudang Utama Jakarta",
-      "total": 78500000,
-      "paid": 0,
-      "status": "Menunggu Approval",
-      "description": "Pemesanan resin PP homopolymer untuk produksi karung sak dan wadah cup plastik",
-      "items": [
-        {
-          "id": "poi-004",
-          "catalogId": "cat-002",
-          "sku": "INV-PL-002",
-          "name": "Resin PP Homopolymer H1500",
-          "category": "Bahan Baku Plastik",
-          "qty": 3289,
-          "unit": "Kg",
-          "price": 21500,
-          "total": 70713500,
-          "notes": "Permohonan pengadaan darurat kapasitas pabrik"
-        }
-      ]
-    }
-  ],
-  "q": [
-    {
-      "id": "s-001",
-      "number": "INV-2026-001",
-      "type": "Faktur Penjualan",
-      "customer": "PT Surya Kencana Packindo",
-      "date": "2026-11-13",
-      "dueDate": "2026-12-13",
-      "tag": "Proyek Utama",
-      "subtotal": 100000000,
-      "ppn": 11000000,
-      "withholding": 2000000,
-      "total": 109000000,
-      "paid": 0,
-      "status": "Belum Dibayar",
-      "paymentMethod": "Transfer Bank"
-    },
-    {
-      "id": "s-002",
-      "number": "INV-2026-002",
-      "type": "Faktur Penjualan",
-      "customer": "CV Makmur Plastik Lestari",
-      "date": "2026-11-13",
-      "dueDate": "2026-11-30",
-      "tag": "Retail & Grosir",
-      "subtotal": 40000000,
-      "ppn": 4400000,
-      "withholding": 0,
-      "total": 44400000,
-      "paid": 44400000,
-      "status": "Lunas",
-      "paymentMethod": "Transfer Bank"
-    },
-    {
-      "id": "s-003",
-      "number": "INV-2026-003",
-      "type": "Faktur Penjualan",
-      "customer": "PT Sentosa Abadi Plastindo",
-      "date": "2026-11-13",
-      "dueDate": "2026-12-28",
-      "tag": "Proyek Ekspansi",
-      "subtotal": 120000000,
-      "ppn": 13200000,
-      "withholding": 2400000,
-      "total": 130800000,
-      "paid": 0,
-      "status": "Butuh Persetujuan",
-      "paymentMethod": "Transfer Bank"
-    }
-  ],
+  "k": [],
+  "z": [],
+  "$": [],
+  "q": [],
   "j": [
     {
       "code": "1-10001",
       "name": "Kas Operasional",
       "category": "Kas & Bank",
-      "balance": 0
+      "balance": 0,
+      "normalBalance": 0
     },
     {
       "code": "1-10002",
       "name": "Bank BCA Giro",
       "category": "Kas & Bank",
-      "balance": 0
+      "balance": 0,
+      "normalBalance": 0
     },
     {
       "code": "1-10003",
       "name": "Bank Mandiri Operasional",
       "category": "Kas & Bank",
-      "balance": 0
+      "balance": 0,
+      "normalBalance": 0
     },
     {
       "code": "1-10200",
       "name": "Piutang Usaha (AR)",
       "category": "Piutang",
-      "balance": 0
+      "balance": 0,
+      "normalBalance": 0
     },
     {
       "code": "1-10300",
       "name": "Persediaan Bahan Baku",
       "category": "Persediaan",
-      "balance": 0
+      "balance": 0,
+      "normalBalance": 0
     },
     {
       "code": "1-10301",
       "name": "Persediaan Barang Jadi",
       "category": "Persediaan",
-      "balance": 0
+      "balance": 0,
+      "normalBalance": 0
     },
     {
       "code": "1-10700",
       "name": "Aset Tetap Mesin Extruder",
       "category": "Aset Tetap",
-      "balance": 0
+      "balance": 0,
+      "normalBalance": 0
     },
     {
       "code": "1-10701",
       "name": "Akumulasi Penyusutan Mesin",
       "category": "Akumulasi Penyusutan",
       "balance": 0,
-      "isContra": true
+      "isContra": true,
+      "normalBalance": 0
     },
     {
       "code": "2-10100",
       "name": "Utang Usaha (AP)",
       "category": "Liabilitas",
-      "balance": 0
+      "balance": 0,
+      "normalBalance": 0
     },
     {
       "code": "2-10200",
       "name": "Utang Pajak PPN & PPh",
       "category": "Liabilitas",
-      "balance": 0
+      "balance": 0,
+      "normalBalance": 0
     },
     {
       "code": "3-10001",
       "name": "Modal Disetor Pemilik",
       "category": "Ekuitas",
-      "balance": 0
+      "balance": 0,
+      "normalBalance": 0
     },
     {
       "code": "3-10002",
       "name": "Laba Ditahan",
       "category": "Ekuitas",
-      "balance": 0
+      "balance": 0,
+      "normalBalance": 0
     },
     {
       "code": "4-10000",
       "name": "Pendapatan Penjualan Produk Plastik",
       "category": "Pendapatan",
-      "balance": 0
+      "balance": 0,
+      "normalBalance": 0
     },
     {
       "code": "5-10000",
       "name": "Harga Pokok Penjualan (HPP)",
       "category": "HPP",
-      "balance": 0
+      "balance": 0,
+      "normalBalance": 0
     },
     {
       "code": "6-10001",
       "name": "Beban Gaji & Upah Karyawan",
       "category": "Beban",
-      "balance": 0
+      "balance": 0,
+      "normalBalance": 0
     },
     {
       "code": "6-10002",
       "name": "Beban Operasional Pabrik & Kantor",
       "category": "Beban",
-      "balance": 0
+      "balance": 0,
+      "normalBalance": 0
     },
     {
       "code": "6-10003",
       "name": "Beban Penyusutan Mesin",
       "category": "Beban",
-      "balance": 0
+      "balance": 0,
+      "normalBalance": 0
     }
   ],
-  "s": [
-    {
-      "id": "tax-001",
-      "docNumber": "010.002-26.00000001",
-      "type": "PPN Keluaran",
-      "partner": "PT Surya Kencana Packindo",
-      "date": "2026-11-13",
-      "dpp": 100000000,
-      "taxAmount": 11000000,
-      "coretaxStatus": "Siap Dilaporkan"
-    },
-    {
-      "id": "tax-002",
-      "docNumber": "010.002-26.00000002",
-      "type": "PPN Keluaran",
-      "partner": "CV Makmur Plastik Lestari",
-      "date": "2026-11-13",
-      "dpp": 40000000,
-      "taxAmount": 4400000,
-      "coretaxStatus": "Dilaporkan"
-    }
-  ],
-  "_": [
-    {
-      "id": "vnd-001",
-      "code": "VND-001",
-      "name": "PT Duta Polimer Indonesia",
-      "category": "Bahan Baku Plastik",
-      "phone": "081298765432",
-      "email": "sales@dutapolimer.co.id",
-      "address": "Kawasan Industri MM2100 Blok C-12, Cikarang",
-      "npwp": "01.234.567.8-012.000",
-      "bankName": "BCA",
-      "bankAccount": "5012345678",
-      "bankHolder": "PT Duta Polimer Indonesia",
-      "paymentTerm": "Net 30",
-      "notes": "Pemasok utama resin HDPE film grade kualitas ekspor",
-      "status": "Aktif",
-      "createdAt": "2026-11-13"
-    },
-    {
-      "id": "vnd-002",
-      "code": "VND-002",
-      "name": "CV Sinar Jaya Abadi Plastik",
-      "category": "Bahan Pewarna / Masterbatch",
-      "phone": "081388776655",
-      "email": "sinarjaya@gmail.com",
-      "address": "Jl. Raya Rungkut Industri No. 45, Surabaya",
-      "npwp": "02.345.678.9-023.000",
-      "bankName": "Bank Mandiri",
-      "bankAccount": "1420019283746",
-      "bankHolder": "CV Sinar Jaya Abadi",
-      "paymentTerm": "Net 14",
-      "notes": "Vendor masterbatch pigmen warna biru dan putih",
-      "status": "Nonaktif",
-      "createdAt": "2026-11-13"
-    }
-  ],
-  "t": [
-    {
-      "woNumber": "WO-2026-101",
-      "product": "Kantong Plastik HDPE Roll 40x60 Transparan",
-      "bomLevel": "Multi-Level Assembly",
-      "qtyTarget": 1000,
-      "qtyDone": 650,
-      "stdCost": 110000,
-      "actualCost": 112500,
-      "status": "Dalam Proses"
-    },
-    {
-      "woNumber": "WO-2026-102",
-      "product": "Plastik Lembaran PP Ketebalan 0.05mm",
-      "bomLevel": "Single-Level Extrusion",
-      "qtyTarget": 500,
-      "qtyDone": 500,
-      "stdCost": 22000,
-      "actualCost": 22000,
-      "status": "Selesai"
-    }
-  ]
+  "s": [],
+  "_": [],
+  "t": []
 }
