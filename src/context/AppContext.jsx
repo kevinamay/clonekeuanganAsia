@@ -27,7 +27,7 @@ export function AppProvider({ children }) {
   const [expenses, setExpenses] = useState(() => seedData.x || []);
   const [bankMutations, setBankMutations] = useState(() => seedData.M || []);
   const [budgetRows, setBudgetRows] = useState(() => seedData.r || []);
-  const [products, setProducts] = useState(() => seedData.w || []);
+  const [products, setProducts] = useState(() => (seedData.z && seedData.z.length > 0 ? seedData.z : seedData.w) || []);
   const [vendors, setVendors] = useState(() => seedData._ || []);
   const [workOrders, setWorkOrders] = useState(() => seedData.t || []);
   const [taxRecords, setTaxRecords] = useState(() => seedData.s || []);
@@ -36,7 +36,7 @@ export function AppProvider({ children }) {
   const [bankRules, setBankRules] = useState(() => seedData.J || []);
   const [giroDocs, setGiroDocs] = useState(() => seedData.o || []);
   const [journalEntries, setJournalEntries] = useState([]);
-  const [fixedAssets, setFixedAssets] = useState([]);
+  const [fixedAssets, setFixedAssets] = useState(() => seedData.O || []);
   const [auditLogs, setAuditLogs] = useState([]);
   const [customPopups, setCustomPopups] = useState([]);
 
