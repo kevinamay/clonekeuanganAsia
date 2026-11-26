@@ -4,8 +4,8 @@ import { ref, onValue, set } from 'firebase/database';
 
 const AppContext = createContext();
 
-// Prefix to separate our local workspace from external production databases
-const DB_PREFIX = 'local_workspace_data';
+// Primary Realtime Database node path in user's Firebase project
+const DB_PREFIX = 'finance_data';
 
 export const DEFAULT_FULFILLMENTS = [];
 
