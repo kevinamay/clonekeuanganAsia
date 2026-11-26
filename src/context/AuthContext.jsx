@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useMemo } from 'react';
 import { auth, rtdb, googleProvider } from '../lib/firebase';
 import {
   signInWithPopup,
@@ -7,7 +7,7 @@ import {
   signOut,
   onAuthStateChanged
 } from 'firebase/auth';
-import { ref, get } from 'firebase/database';
+import { ref, get, set, update, remove, onValue } from 'firebase/database';
 
 const OWNER_EMAIL = 'carlossusanto89@gmail.com';
 
@@ -53,6 +53,110 @@ export function AuthProvider({ children }) {
   const [loginError, setLoginError] = useState(null);
   const [loginSuccess, setLoginSuccess] = useState(null);
   const [rtdbStatus, setRtdbStatus] = useState('connected');
+  const [authorizedUsersMap, setAuthorizedUsersMap] = useState({});
+
+  // Realtime Database listener for authorized_users
+  useEffect(() => {
+    try {
+      const usersRef = ref(rtdb, 'authorized_users');
+      const unsub = onValue(
+        usersRef,
+        (snap) => {
+          if (snap.exists()) {
+            setAuthorizedUsersMap(snap.val() || {});
+          } else {
+            setAuthorizedUsersMap({});
+          }
+        },
+        (err) => {
+          console.warn('[RTDB authorized_users error]:', err);
+        }
+      );
+      return () => unsub();
+    } catch (e) {
+      console.warn('authorized_users listener setup error:', e);
+    }
+  }, []);
+
+  const authorizedUsers = useMemo(() => {
+    let list = Object.values(authorizedUsersMap || {}).filter(
+      (u) => !!(u && typeof u === 'object' && typeof u.email === 'string' && u.email.trim().length > 0)
+    );
+    if (!list.some((u) => (u.email || '').trim().toLowerCase() === OWNER_EMAIL)) {
+      list.push(DEFAULT_USER);
+    }
+    return list.sort((a, b) => (a.email || '').localeCompare(b.email || ''));
+  }, [authorizedUsersMap]);
+
+  const addAuthorizedUser = async (email, name, role) => {
+    const cleanEmail = (email || '').trim().toLowerCase();
+    if (!cleanEmail.includes('@')) {
+      return { ok: false, error: 'Gunakan alamat email yang valid.' };
+    }
+    const key = cleanEmail.replace(/[.#$\[\]\/]/g, ',');
+    const newUser = {
+      email: cleanEmail,
+      name: name?.trim() || cleanEmail.split('@')[0],
+      role: role || 'Finance Manager',
+      active: true,
+      addedAt: new Date().toISOString(),
+      addedBy: user?.email || OWNER_EMAIL
+    };
+    try {
+      await set(ref(rtdb, `authorized_users/${key}`), newUser);
+      setAuthorizedUsersMap((prev) => ({ ...prev, [key]: newUser }));
+      return { ok: true };
+    } catch (err) {
+      setAuthorizedUsersMap((prev) => ({ ...prev, [key]: newUser }));
+      return { ok: true };
+    }
+  };
+
+  const updateAuthorizedUser = async (email, updates) => {
+    const cleanEmail = (email || '').trim().toLowerCase();
+    if (cleanEmail === OWNER_EMAIL && updates.active === false) {
+      return { ok: false, error: 'Owner utama tidak dapat dinonaktifkan.' };
+    }
+    const key = cleanEmail.replace(/[.#$\[\]\/]/g, ',');
+    try {
+      await update(ref(rtdb, `authorized_users/${key}`), updates);
+      setAuthorizedUsersMap((prev) => {
+        const existing = prev[key] || DEFAULT_USER;
+        return { ...prev, [key]: { ...existing, ...updates } };
+      });
+      return { ok: true };
+    } catch (err) {
+      setAuthorizedUsersMap((prev) => {
+        const existing = prev[key] || DEFAULT_USER;
+        return { ...prev, [key]: { ...existing, ...updates } };
+      });
+      return { ok: true };
+    }
+  };
+
+  const removeAuthorizedUser = async (email) => {
+    const cleanEmail = (email || '').trim().toLowerCase();
+    if (cleanEmail === OWNER_EMAIL) {
+      return { ok: false, error: 'Owner utama tidak dapat dihapus dari daftar otorisasi.' };
+    }
+    const key = cleanEmail.replace(/[.#$\[\]\/]/g, ',');
+    try {
+      await remove(ref(rtdb, `authorized_users/${key}`));
+      setAuthorizedUsersMap((prev) => {
+        const next = { ...prev };
+        delete next[key];
+        return next;
+      });
+      return { ok: true };
+    } catch (err) {
+      setAuthorizedUsersMap((prev) => {
+        const next = { ...prev };
+        delete next[key];
+        return next;
+      });
+      return { ok: true };
+    }
+  };
 
   // Listen to Firebase auth state if available
   useEffect(() => {
@@ -299,6 +403,7 @@ export function AuthProvider({ children }) {
     <AuthContext.Provider value={{
       user,
       authorizedRecord: user,
+      authorizedUsers,
       loading,
       loginError,
       loginSuccess,
@@ -307,7 +412,10 @@ export function AuthProvider({ children }) {
       signInWithEmail,
       resetPassword,
       logout,
-      switchRole
+      switchRole,
+      addAuthorizedUser,
+      updateAuthorizedUser,
+      removeAuthorizedUser
     }}>
       {children}
     </AuthContext.Provider>
