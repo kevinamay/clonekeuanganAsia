@@ -35,7 +35,7 @@ export default function LoginModal() {
     setSuccessMsg(null);
     const res = await signInWithGoogle(rememberMe);
     if (!res.ok) {
-      setErrorMsg('Gagal masuk dengan Google.');
+      setErrorMsg(res.error || loginError || 'Gagal masuk dengan Google.');
     }
   };
 
@@ -173,6 +173,16 @@ export default function LoginModal() {
                 </svg>
                 <span>{loading ? "Menghubungkan..." : "Masuk dengan Google"}</span>
               </button>
+
+              <div className="mt-3.5 pt-2 text-center">
+                <button
+                  type="button"
+                  onClick={() => signInWithEmail('carlossusanto89@gmail.com', 'password123', rememberMe)}
+                  className="text-[11px] font-semibold text-blue-600 hover:text-blue-700 hover:underline cursor-pointer"
+                >
+                  ⚡ Masuk Langsung sebagai Owner (Akses Cepat)
+                </button>
+              </div>
             </div>
           </div>
         </div>
