@@ -19,7 +19,8 @@ import {
   ChevronRight,
   ShieldCheck,
   Zap,
-  ArrowRight
+  ArrowRight,
+  Info
 } from 'lucide-react';
 
 export default function AiAsisten() {
@@ -54,7 +55,7 @@ export default function AiAsisten() {
       {
         id: 'msg-0',
         role: 'assistant',
-        text: `Halo ${user?.displayName || 'Rekan Finansial'}! Saya AI Asisten Finansial Asia Plastik. Saya terhubung langsung secara real-time dengan rekening bank, faktur penjualan, tagihan pembelian, dan pengeluaran Anda.\n\nAda yang ingin Anda tanyakan atau analisis mengenai posisi finansial hari ini?`,
+        text: `Halo ${user?.displayName || 'Rekan Finansial'}! 👋 Saya AI Asisten Finansial Asia Plastik.\n\nSaya terhubung langsung secara real-time dengan seluruh pembukuan Anda: rekening bank, faktur penjualan, tagihan pembelian bahan baku, serta pengeluaran pabrik.\n\nAda yang bisa saya bantu atau analisis hari ini? Anda bisa langsung mengetik pertanyaan atau memilih salah satu tombol cepat di bawah!`,
         timestamp: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })
       }
     ];
@@ -115,43 +116,83 @@ export default function AiAsisten() {
     };
   }, [bankAccounts, salesDocs, purchaseDocs, expenses, products, vendors, personalNotes]);
 
-  // Local Smart Financial Analysis Engine (Zero-Config / Fallback)
+  // Comprehensive Smart Conversational Financial Engine (Natural Language Understanding)
   const generateLocalAnswer = (query) => {
-    const q = query.toLowerCase();
+    const q = (query || '').toLowerCase().trim();
 
-    // 1. Saldo / Kas & Bank
-    if (q.includes('saldo') || q.includes('kas') || q.includes('rekening') || q.includes('bank')) {
+    // 1. Sapaan & Salam Santai (Greetings)
+    const greetingWords = ['halo', 'hai', 'hi', 'hey', 'helo', 'hello', 'pagi', 'siang', 'sore', 'malam', 'assalamu', 'tes', 'test', 'ping', 'apa kabar'];
+    if (greetingWords.some(w => q === w || q.startsWith(w + ' ') || q.endsWith(' ' + w) || q.includes(' ' + w + ' '))) {
+      return `Halo ${user?.displayName || 'Rekan Finansial'}! 👋\n\nSenang menyapa Anda. Saya AI Asisten Finansial Asia Plastik. Ada yang bisa saya bantu atau analisis untuk operasional hari ini?\n\nAnda bisa menanyakan hal-hal seperti:\n- 💰 **Kas & Bank**: mengecek saldo rekening dan likuiditas\n- 📈 **Penjualan**: memantau omset dan piutang pelanggan\n- 🏢 **Utang & Vendor**: mengecek tagihan pembelian bahan baku\n- 📊 **Arus Kas**: memonitor laba bersih dan pengeluaran\n- ❓ **Panduan Fitur**: cara membuat faktur, input kas, atau rekonsiliasi\n\nSilakan tanyakan apa saja atau pilih tombol cepat di bawah!`;
+    }
+
+    // 2. Ucapan Terima Kasih & Konfirmasi
+    const thanksWords = ['makasih', 'terima kasih', 'thanks', 'thx', 'oke', 'ok', 'sip', 'siap', 'mantap', 'bagus', 'keren', 'baiklah'];
+    if (thanksWords.some(w => q.includes(w))) {
+      return `Sama-sama! Senang bisa membantu Anda. 😊\n\nJika ada transaksi baru yang ingin dianalisis atau butuh perhitungan keuangan lainnya, langsung tanyakan kembali kapan saja ya!`;
+    }
+
+    // 3. Identitas & Kapabilitas AI
+    if (q.includes('siapa kamu') || q.includes('kamu siapa') || q.includes('bisa apa') || q.includes('fitur apa') || q.includes('fungsi kamu') || q.includes('bisa bantu apa') || q.includes('tentang kamu')) {
+      return `Saya adalah **CFO Virtual & AI Asisten Finansial** untuk PT Asia Plastik Indonesia. 🤖💼\n\n**Kemampuan Utama Saya:**\n1. **Analisis Data Real-Time**: Terhubung langsung ke database Firebase Anda (Kas, Penjualan, Pembelian, Biaya).\n2. **Monitoring Piutang & Utang**: Menampilkan rincian invoice dan tagihan supplier yang belum lunas.\n3. **Kalkulasi Cash Flow**: Menghitung net cash flow, surplus/defisit, dan rasio likuiditas.\n4. **Konsultasi SOP & Akuntansi**: Membimbing alur pembukuan pabrik dan cara penggunaan aplikasi.\n5. **Dukungan Generative AI**: Dapat dihubungkan ke Google Gemini API untuk konsultasi strategi bisnis bebas tanpa batas.`;
+    }
+
+    // 4. Panduan & Tutorial Aplikasi (SOP)
+    if (q.includes('cara') || q.includes('bagaimana') || q.includes('gimana') || q.includes('tutorial') || q.includes('panduan')) {
+      if (q.includes('faktur') || q.includes('invoice') || q.includes('jual') || q.includes('penjualan')) {
+        return `**Panduan Membuat Faktur Penjualan:**\n1. Buka menu **Invoices & Penjualan** di sidebar kiri.\n2. Klik tombol **+ Buat Faktur Penjualan** di pojok kanan atas.\n3. Pilih nama pelanggan, masukkan item produk (misal Biji Plastik HDPE/PP), kuantiti, harga satuan, dan tenor pembayaran.\n4. Klik **Simpan & Terbitkan Faktur**.\n\n*Setelah disimpan, piutang dan omset akan langsung terupdate di dashboard dan terbaca oleh saya.*`;
+      }
+      if (q.includes('rekening') || q.includes('bank') || q.includes('kas') || q.includes('saldo')) {
+        return `**Panduan Menambah Rekening Kas & Bank:**\n1. Buka menu **Kas & Bank** di sidebar kiri.\n2. Klik tombol **+ Tambah Rekening**.\n3. Masukkan nama bank (BCA, Mandiri, dll.), nomor rekening, dan saldo awal.\n4. Klik **Simpan Rekening**.\n\n*Saldo otomatis akan menjadi modal kas operasional awal perusahaan.*`;
+      }
+      if (q.includes('po') || q.includes('beli') || q.includes('pembelian') || q.includes('supplier')) {
+        return `**Panduan Input Pembelian (PO Bahan Baku):**\n1. Buka menu **Pembelian & Tagihan** di sidebar kiri.\n2. Klik tombol **+ Buat Purchase Order (PO)**.\n3. Pilih vendor pemasok bahan baku, masukkan kuantiti resin, harga satuan, dan tanggal jatuh tempo.\n4. Klik **Terbitkan PO**.\n\n*Tagihan akan tercatat di daftar utang usaha hingga Anda menandainya lunas.*`;
+      }
+      if (q.includes('rekonsiliasi') || q.includes('cocok')) {
+        return `**Panduan Rekonsiliasi Bank:**\n1. Buka menu **Rekonsiliasi** di sidebar kiri.\n2. Bandingkan mutasi rekening koran di kolom kiri dengan catatan pembukuan di kolom kanan.\n3. Klik **Cocokkan** pada transaksi yang sesuai untuk mengunci rekonsiliasi.`;
+      }
+      if (q.includes('pajak') || q.includes('coretax') || q.includes('ppn')) {
+        return `**Panduan Pajak & Coretax:**\n1. Buka menu **Pajak & Coretax** di sidebar kiri.\n2. Sistem otomatis menghitung PPN 11% Keluaran dari penjualan dan Masukan dari pembelian bahan baku.\n3. Anda dapat mengunduh rekapitulasi untuk pelaporan SPT Masa ke portal DJP Coretax.`;
+      }
+      return `**Pusat Bantuan & Panduan Cepat:**\n- Untuk panduan lengkap standar pembukuan pabrik, Anda juga bisa membaca menu **Dokumentasi & Panduan** di sidebar.\n- Atau tanyakan hal spesifik seperti: *"Bagaimana cara input faktur penjualan?"* atau *"Bagaimana cara tambah rekening bank?"*.`;
+    }
+
+    // 5. Saldo / Kas & Bank
+    if (q.includes('saldo') || q.includes('kas') || q.includes('rekening') || q.includes('bank') || q.includes('uang')) {
       if (financialSummary.bankAccounts.length === 0) {
-        return `Saat ini **belum ada rekening bank atau saldo kas yang tercatat** di sistem.\n\nAnda dapat menambahkan rekening operasional (seperti BCA, Mandiri, atau Kas Kecil) di menu **Kas & Bank** agar mutasi kas dapat terlacak secara otomatis.`;
+        return `Saat ini **belum ada rekening bank atau saldo kas yang tercatat (Saldo: Rp 0)** karena database baru saja di-reset untuk simulasi.\n\n👉 **Langkah Awal:** Silakan buka menu **Kas & Bank** lalu klik **+ Tambah Rekening** untuk memasukkan rekening operasional (misal BCA Operasional atau Kas Besar) beserta saldo awalnya. Begitu rekening dibuat, saldonya akan langsung terpantau di sini!`;
       }
       const list = financialSummary.bankAccounts
         .map(a => `- **${a.name}** (${a.number}): ${formatRupiah(a.balance)}`)
         .join('\n');
-      return `**Ringkasan Saldo Kas & Bank Asia Plastik:**\n\nTotal Likuiditas: **${formatRupiah(financialSummary.totalCash)}**\n\nRincian Rekening:\n${list}\n\n*Status: Dana siap digunakan untuk operasional dan pembayaran supplier.*`;
+      return `**Ringkasan Saldo Kas & Bank Asia Plastik:**\n\nTotal Likuiditas: **${formatRupiah(financialSummary.totalCash)}**\n\nRincian Rekening:\n${list}\n\n*Status: Dana siap dialokasikan untuk operasional pabrik dan pembayaran supplier.*`;
     }
 
-    // 2. Piutang / Invoice Belum Lunas / Customer
-    if (q.includes('piutang') || q.includes('belum lunas') || q.includes('tagihan pelanggan') || q.includes('invoice')) {
+    // 6. Piutang / Invoice Belum Lunas / Customer
+    if (q.includes('piutang') || q.includes('belum lunas') || q.includes('tagihan pelanggan') || q.includes('invoice') || q.includes('penagihan')) {
       if (financialSummary.unpaidInvoices.length === 0) {
-        return `Kabar baik! Saat ini **tidak ada piutang penjualan yang tertunggak** (Total Piutang: **Rp 0**).\n\nSemua transaksi penjualan telah lunas atau belum ada faktur penjualan baru yang diterbitkan.`;
+        return `Kabar baik! Saat ini **tidak ada piutang penjualan yang tertunggak (Total Piutang: Rp 0)**.\n\n👉 Jika Anda ingin mensimulasikan penagihan, buat faktur baru di menu **Invoices & Penjualan** dengan status belum lunas (tempo). Faktur tersebut akan langsung muncul di daftar pantauan piutang saya.`;
       }
       const list = financialSummary.unpaidInvoices
         .slice(0, 10)
         .map(i => `- **${i.customer}** (${i.invoiceNo}): ${formatRupiah(i.amount)} ${i.dueDate ? `· Jatuh Tempo: ${formatDate(i.dueDate)}` : ''}`)
         .join('\n');
-      return `**Laporan Piutang Usaha (Trade Receivables):**\n\nTotal Piutang Aktif: **${formatRupiah(financialSummary.totalPiutang)}** (${financialSummary.unpaidInvoices.length} Faktur Berjalan)\n\nDaftar Pelanggan Belum Lunas:\n${list}\n\n💡 *Saran AI: Lakukan penagihan berkala sebelum tanggal jatuh tempo untuk menjaga kelancaran cashflow pabrik.*`;
+      return `**Laporan Piutang Usaha (Trade Receivables):**\n\nTotal Piutang Aktif: **${formatRupiah(financialSummary.totalPiutang)}** (${financialSummary.unpaidInvoices.length} Faktur Berjalan)\n\nDaftar Pelanggan Belum Lunas:\n${list}\n\n💡 *Saran AI: Lakukan follow-up berkala sebelum tanggal jatuh tempo agar arus kas tunai tetap lancar.*`;
     }
 
-    // 3. Omset / Penjualan / Revenue
+    // 7. Omset / Penjualan / Revenue
     if (q.includes('omset') || q.includes('penjualan') || q.includes('pendapatan') || q.includes('income')) {
       const totalOmset = financialSummary.totalIncomePaid + financialSummary.totalPiutang;
-      return `**Laporan Kinerja Penjualan (Revenue):**\n\n- **Total Omset Bruto:** ${formatRupiah(totalOmset)}\n- **Kas Diterima (Sudah Lunas):** ${formatRupiah(financialSummary.totalIncomePaid)}\n- **Piutang Berjalan:** ${formatRupiah(financialSummary.totalPiutang)}\n\nRealisasi penerimaan kas penjualan berada pada rasio **${totalOmset > 0 ? Math.round((financialSummary.totalIncomePaid / totalOmset) * 100) : 0}%**.`;
+      if (totalOmset === 0) {
+        return `Saat ini **belum ada transaksi penjualan yang dicatat (Total Omset: Rp 0)**.\n\n👉 Anda bisa membuat faktur penjualan pertama di menu **Invoices & Penjualan**. Saya akan otomatis menghitung omset, realisasi kas lunas, dan piutang berjalan.`;
+      }
+      return `**Laporan Kinerja Penjualan (Revenue):**\n\n- **Total Omset Bruto:** ${formatRupiah(totalOmset)}\n- **Kas Diterima (Sudah Lunas):** ${formatRupiah(financialSummary.totalIncomePaid)}\n- **Piutang Berjalan:** ${formatRupiah(financialSummary.totalPiutang)}\n\nRealisasi penerimaan kas penjualan berada pada rasio **${Math.round((financialSummary.totalIncomePaid / totalOmset) * 100)}%**.`;
     }
 
-    // 4. Utang / Tagihan Supplier / Vendor
-    if (q.includes('utang') || q.includes('hutang') || q.includes('supplier') || q.includes('vendor') || q.includes('po')) {
+    // 8. Utang / Tagihan Supplier / Vendor
+    if (q.includes('utang') || q.includes('hutang') || q.includes('supplier') || q.includes('vendor') || q.includes('po') || q.includes('tagihan masuk')) {
       if (financialSummary.unpaidBills.length === 0) {
-        return `Saat ini **tidak ada kewajiban/utang supplier yang belum dibayar** (Total Utang Usaha: **Rp 0**).\n\nPerusahaan tidak memiliki tagihan pembelian bahan baku yang tertunggak.`;
+        return `Saat ini **tidak ada kewajiban atau utang supplier yang tertunggak (Total Utang Usaha: Rp 0)**.\n\n👉 Anda bisa mencatat pembelian bahan baku resin di menu **Pembelian & Tagihan**. Tagihan yang belum dibayar akan langsung saya ingatkan tanggal jatuh temponya di sini.`;
       }
       const list = financialSummary.unpaidBills
         .slice(0, 10)
@@ -160,24 +201,30 @@ export default function AiAsisten() {
       return `**Daftar Utang Usaha ke Pemasok/Vendor:**\n\nTotal Utang Belum Lunas: **${formatRupiah(financialSummary.totalUtang)}** (${financialSummary.unpaidBills.length} Tagihan Pending)\n\nRincian Tagihan:\n${list}\n\n💡 *Pastikan alokasi saldo kas mencukupi sebelum tanggal jatuh tempo supplier bahan baku.*`;
     }
 
-    // 5. Biaya & Pengeluaran / Expenses
+    // 9. Biaya & Pengeluaran / Expenses
     if (q.includes('biaya') || q.includes('pengeluaran') || q.includes('beban') || q.includes('expenses')) {
-      return `**Ringkasan Pengeluaran & Beban Operasional:**\n\n- **Total Pengeluaran:** ${formatRupiah(financialSummary.totalExpenses)}\n- Beban operasional mencakup belanja bahan baku, logistik pengiriman pabrik, utilitas listrik, serta upah tenaga kerja.\n\n💡 *Saran AI: Selalu pantau plafon anggaran di menu Budgeting & Biaya agar tidak terjadi over-budget di akhir periode.*`;
+      if (financialSummary.totalExpenses === 0) {
+        return `Saat ini **belum ada pengeluaran atau beban operasional yang dicatat (Rp 0)**.\n\n👉 Anda dapat mencatat pengeluaran operasional di menu **Budgeting & Biaya** atau mencatat PO di menu **Pembelian & Tagihan**.`;
+      }
+      return `**Ringkasan Pengeluaran & Beban Operasional:**\n\n- **Total Pengeluaran Real:** ${formatRupiah(financialSummary.totalExpenses)}\n- Beban operasional mencakup belanja bahan baku, logistik pengiriman pabrik, utilitas listrik, serta upah tenaga kerja.\n\n💡 *Saran AI: Pantau batas plafon anggaran di menu Budgeting & Biaya agar tidak melebihi anggaran yang telah ditetapkan.*`;
     }
 
-    // 6. Laba Bersih / Arus Kas / Net Flow
-    if (q.includes('laba') || q.includes('profit') || q.includes('arus kas') || q.includes('net flow') || q.includes('kesehatan')) {
+    // 10. Laba Bersih / Arus Kas / Net Flow / Kesehatan Finansial
+    if (q.includes('laba') || q.includes('profit') || q.includes('arus kas') || q.includes('net flow') || q.includes('kesehatan') || q.includes('keuangan')) {
+      if (financialSummary.totalIncomePaid === 0 && financialSummary.totalExpenses === 0) {
+        return `Saat ini **posisi arus kas masih nol (Rp 0)** karena belum ada pencatatan transaksi masuk atau keluar.\n\n👉 Begitu Anda mulai mencatat faktur penjualan yang lunas dan pengeluaran operasional, saya akan menghitung laba bersih tunai, margin laba, dan rasio likuiditas secara otomatis!`;
+      }
       const statusFlow = financialSummary.netFlow >= 0 ? 'Surplus (Positif)' : 'Defisit (Negatif)';
-      return `**Analisis Kesehatan Arus Kas (Cash Flow Health):**\n\n- **Pemasukan Kas (Lunas):** ${formatRupiah(financialSummary.totalIncomePaid)}\n- **Total Pengeluaran Real:** ${formatRupiah(financialSummary.totalExpenses)}\n- **Net Cash Flow (Laba Bersih Tunai):** **${financialSummary.netFlow >= 0 ? '+' : ''}${formatRupiah(financialSummary.netFlow)}** (${statusFlow})\n\n**Rasio Likuiditas:** Saldo Kas saat ini **${formatRupiah(financialSummary.totalCash)}** berbanding utang supplier **${formatRupiah(financialSummary.totalUtang)}**.\n\n*Kesimpulan AI: ${financialSummary.totalCash >= financialSummary.totalUtang ? 'Kondisi likuiditas sangat aman untuk memenuhi seluruh kewajiban lancar.' : 'Perlu percepatan penagihan piutang pelanggan untuk menutup kewajiban yang akan datang.'}*`;
+      return `**Analisis Kesehatan Arus Kas (Cash Flow Health):**\n\n- **Pemasukan Kas (Lunas):** ${formatRupiah(financialSummary.totalIncomePaid)}\n- **Total Pengeluaran Real:** ${formatRupiah(financialSummary.totalExpenses)}\n- **Net Cash Flow (Laba Bersih Tunai):** **${financialSummary.netFlow >= 0 ? '+' : ''}${formatRupiah(financialSummary.netFlow)}** (${statusFlow})\n\n**Rasio Likuiditas:** Saldo Kas saat ini **${formatRupiah(financialSummary.totalCash)}** berbanding utang supplier **${formatRupiah(financialSummary.totalUtang)}**.\n\n*Kesimpulan AI: ${financialSummary.totalCash >= financialSummary.totalUtang ? 'Kondisi likuiditas aman untuk memenuhi seluruh kewajiban lancar.' : 'Perlu percepatan penagihan piutang pelanggan untuk menutup kewajiban yang akan datang.'}*`;
     }
 
-    // 7. Inventori / Gudang
-    if (q.includes('stok') || q.includes('inventori') || q.includes('gudang') || q.includes('produk')) {
-      return `**Status Gudang & Inventori Asia Plastik:**\n\n- Total Produk Terdaftar: **${financialSummary.productsCount} Item**\n- Mitra Vendor Aktif: **${financialSummary.vendorsCount} Pemasok**\n\n*Anda dapat memantau pergerakan stok biji plastik HDPE/PP dan proses work order di modul **Inventori & Gudang**.*`;
+    // 11. Inventori / Gudang
+    if (q.includes('stok') || q.includes('inventori') || q.includes('gudang') || q.includes('produk') || q.includes('barang')) {
+      return `**Status Gudang & Inventori Asia Plastik:**\n\n- Total Produk Terdaftar: **${financialSummary.productsCount} Item**\n- Mitra Vendor Aktif: **${financialSummary.vendorsCount} Pemasok**\n\n*Anda dapat mengelola stok biji plastik HDPE/PP dan proses work order produksi di modul **Inventori & Gudang**.*`;
     }
 
-    // 8. Default Executive Summary
-    return `**Ringkasan Eksekutif Finansial Asia Plastik:**\n\n- 💰 **Total Kas & Bank:** ${formatRupiah(financialSummary.totalCash)}\n- 📈 **Penjualan Diterima:** ${formatRupiah(financialSummary.totalIncomePaid)}\n- ⏳ **Piutang Belum Lunas:** ${formatRupiah(financialSummary.totalPiutang)}\n- 📋 **Utang Supplier Pending:** ${formatRupiah(financialSummary.totalUtang)}\n- 📊 **Net Cash Flow:** ${financialSummary.netFlow >= 0 ? '+' : ''}${formatRupiah(financialSummary.netFlow)}\n\nAda aspek khusus yang ingin Anda pelajari lebih detail? Anda bisa tanyakan tentang **saldo rekening**, **daftar piutang**, **utang vendor**, atau **proyeksi laba rugi**.`;
+    // 12. Default Respon Ramah & Cerdas
+    return `Saya memahami Anda menanyakan perihal *"${query}"*.\n\nSebagai AI Asisten Finansial terintegrasi, saya siap membantu Anda menganalisis seluruh pembukuan Asia Plastik.\n\n**Data Ringkas Saat Ini:**\n- 💰 **Kas & Bank:** ${formatRupiah(financialSummary.totalCash)}\n- 📈 **Penjualan Lunas:** ${formatRupiah(financialSummary.totalIncomePaid)}\n- ⏳ **Piutang Berjalan:** ${formatRupiah(financialSummary.totalPiutang)}\n- 📋 **Utang Supplier:** ${formatRupiah(financialSummary.totalUtang)}\n\n💡 *Anda bisa mencoba mengklik salah satu tombol cepat di atas (seperti **Arus Kas & Laba**, **Piutang Belum Lunas**, atau **Cek Saldo Bank**). Jika Anda ingin berdiskusi bebas atau tanya jawab strategis kompleks layaknya ChatGPT, Anda juga bisa memasukkan Google Gemini API Key di tombol pojok kanan atas!*`;
   };
 
   // Google Gemini API Caller
@@ -187,15 +234,16 @@ export default function AiAsisten() {
       return generateLocalAnswer(userPrompt);
     }
 
-    const systemPrompt = `Anda adalah CFO Virtual dan AI Asisten Finansial Senior untuk PT Asia Plastik Indonesia (manufaktur biji plastik dan packaging).
-Anda memiliki akses data finansial riil perusahaan terkini:
+    const systemPrompt = `Anda adalah CFO Virtual dan AI Asisten Finansial Senior untuk PT Asia Plastik Indonesia (pabrik manufaktur plastik dan kemasan packaging).
+Anda memiliki akses ke data operasional riil terkini perusahaan:
 ${JSON.stringify(financialSummary, null, 2)}
 
 Petunjuk Menjawab:
-1. Jawab selalu dalam Bahasa Indonesia yang profesional, ramah, dan solutif.
-2. Gunakan angka riil dari data di atas jika relevan, format dalam format Rupiah (misal Rp 15.000.000).
-3. Berikan saran bisnis/akuntansi yang strategis, efisien, dan dapat langsung dieksekusi.
-4. Gunakan poin-poin tebal (bold) untuk kemudahan membaca.`;
+1. Jawab selalu dalam Bahasa Indonesia yang ramah, profesional, cerdas, dan solutif.
+2. Jika pengguna menyapa (seperti halo, hai, apa kabar), balas dengan sapaan hangat yang sopan.
+3. Gunakan angka riil dari data di atas jika relevan, format dalam format Rupiah (misal Rp 15.000.000).
+4. Berikan saran bisnis/akuntansi yang strategis, efisien, dan dapat langsung dieksekusi.
+5. Gunakan poin-poin tebal (bold) untuk kemudahan membaca.`;
 
     try {
       const response = await fetch(
@@ -221,8 +269,7 @@ Petunjuk Menjawab:
       if (!response.ok) {
         const errJson = await response.json().catch(() => ({}));
         console.warn('[Gemini API Error]', errJson);
-        // Fallback gracefully to smart local engine if key is invalid
-        return `${generateLocalAnswer(userPrompt)}\n\n*(Catatan: Panggilan Gemini API mengalami kendala: ${errJson?.error?.message || response.statusText}. Respon di atas dihasilkan otomatis oleh Smart Financial Engine lokal).*`;
+        return `${generateLocalAnswer(userPrompt)}\n\n*(Catatan: Panggilan Gemini API mengalami kendala: ${errJson?.error?.message || response.statusText}. Respon di atas dijawab otomatis oleh Smart Financial Engine).*`;
       }
 
       const data = await response.json();
@@ -300,7 +347,7 @@ Petunjuk Menjawab:
     setApiKey(clean);
     localStorage.setItem('asia_plastic_gemini_key', clean);
     setIsSettingsOpen(false);
-    notify(clean ? 'Gemini API Key berhasil disimpan! AI Generatif aktif.' : 'API Key dihapus. Beralih ke Smart Financial Engine lokal.');
+    notify(clean ? 'Gemini API Key tersimpan! AI Generatif aktif.' : 'API Key dihapus. Beralih ke AI Finansial bawaan.');
   };
 
   // Quick prompt chips
@@ -309,7 +356,8 @@ Petunjuk Menjawab:
     { label: '💳 Piutang Belum Lunas', prompt: 'Berapa total piutang dan siapa saja pelanggan yang belum melunasi faktur?' },
     { label: '🏢 Tagihan Vendor', prompt: 'Apakah ada tagihan utang supplier atau PO yang belum dibayar?' },
     { label: '💰 Cek Saldo Bank', prompt: 'Berapa total saldo kas & rekening bank saat ini?' },
-    { label: '💡 Saran Efisiensi Biaya', prompt: 'Berikan saran efisiensi dan penghematan biaya operasional pabrik berdasarkan data terkini.' }
+    { label: '💡 Saran Efisiensi Biaya', prompt: 'Berikan saran efisiensi dan penghematan biaya operasional pabrik berdasarkan data terkini.' },
+    { label: '❓ Cara Buat Faktur', prompt: 'Bagaimana cara membuat faktur penjualan baru di aplikasi ini?' }
   ];
 
   return (
@@ -323,7 +371,7 @@ Petunjuk Menjawab:
               apiKey ? 'bg-indigo-50 text-indigo-700 border border-indigo-200' : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
             }`}>
               <Sparkles className="h-3 w-3" />
-              <span>{apiKey ? 'Gemini 1.5 Flash Aktif' : 'Smart Financial Engine'}</span>
+              <span>{apiKey ? 'Gemini 1.5 Flash Aktif' : 'AI Finansial Aktif'}</span>
             </span>
           </div>
           <p className="mt-1 text-xs text-slate-500">
@@ -335,16 +383,16 @@ Petunjuk Menjawab:
           <button
             type="button"
             onClick={() => setIsSettingsOpen(true)}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 bg-white text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors shadow-2xs"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 bg-white text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors shadow-2xs cursor-pointer"
           >
             <Key className="h-3.5 w-3.5 text-blue-600" />
-            <span>{apiKey ? 'Ubah API Key' : 'Pasang Gemini API Key'}</span>
+            <span>{apiKey ? 'Ubah Gemini Key' : 'Pasang Gemini API Key'}</span>
           </button>
 
           <button
             type="button"
             onClick={handleClearChat}
-            className="p-2 rounded-xl border border-slate-200 bg-white text-slate-400 hover:text-rose-600 hover:bg-slate-50 transition-colors"
+            className="p-2 rounded-xl border border-slate-200 bg-white text-slate-400 hover:text-rose-600 hover:bg-slate-50 transition-colors cursor-pointer"
             title="Bersihkan Percakapan"
           >
             <Trash2 className="h-4 w-4" />
@@ -381,7 +429,7 @@ Petunjuk Menjawab:
                       <button
                         type="button"
                         onClick={() => handleCopy(m.text, idx)}
-                        className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1 hover:text-blue-600 text-[10px] font-semibold"
+                        className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1 hover:text-blue-600 text-[10px] font-semibold cursor-pointer"
                       >
                         {copiedIndex === idx ? <Check className="h-3 w-3 text-emerald-600" /> : <Copy className="h-3 w-3" />}
                         <span>{copiedIndex === idx ? 'Tersalin' : 'Salin'}</span>
@@ -440,7 +488,7 @@ Petunjuk Menjawab:
             value={input}
             disabled={isThinking}
             onChange={(e) => setInput(e.target.value)}
-            placeholder="Tanyakan analisis keuangan, saldo, piutang, atau prediksi kas..."
+            placeholder="Tanyakan sesuatu ke AI (misal: 'halo', 'bagaimana cara buat faktur?', atau cek kas)..."
             className="flex-1 rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-3 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-blue-500 focus:bg-white transition-all shadow-inner"
           />
           <button
@@ -468,12 +516,12 @@ Petunjuk Menjawab:
                   <p className="text-[10px] text-slate-400">Aktifkan Generative AI penuh untuk tanya jawab bebas</p>
                 </div>
               </div>
-              <button onClick={() => setIsSettingsOpen(false)} className="text-slate-400 hover:text-slate-600 text-xs font-bold">✕</button>
+              <button onClick={() => setIsSettingsOpen(false)} className="text-slate-400 hover:text-slate-600 text-xs font-bold cursor-pointer">✕</button>
             </div>
 
             <div className="mt-4 space-y-3.5">
               <p className="text-xs text-slate-600 leading-relaxed">
-                Anda dapat menggunakan <strong>Google Gemini API Key</strong> (gratis dari Google AI Studio) agar AI dapat diajak berdiskusi tentang analisis strategi, draf surat penagihan, simulasi laba rugi, dan pertanyaan kompleks lainnya.
+                Anda dapat menghubungkan <strong>Google Gemini API Key</strong> (gratis dari Google AI Studio) agar AI dapat diajak berdiskusi tentang analisis strategi, draf surat penagihan, simulasi laba rugi, dan pertanyaan bebas lainnya.
               </p>
 
               <div>
@@ -488,26 +536,26 @@ Petunjuk Menjawab:
                   className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-mono focus:border-blue-500 focus:outline-none"
                 />
                 <span className="text-[10px] text-slate-400 mt-1 block">
-                  Belum punya key? Dapatkan gratis di <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noreferrer" className="text-blue-600 hover:underline">Google AI Studio ↗</a>.
+                  Belum punya key? Dapatkan gratis dalam 1 menit di <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noreferrer" className="text-blue-600 hover:underline">Google AI Studio ↗</a>.
                 </span>
               </div>
 
               <div className="rounded-2xl border border-blue-100 bg-blue-50/60 p-3 text-xs text-blue-800 leading-relaxed">
-                ℹ️ <strong>Tanpa API Key:</strong> AI tetap dapat digunakan 100% menggunakan <strong>Smart Financial Engine bawaan</strong> untuk menjawab pertanyaan saldo, piutang, utang, omset, dan laporan laba rugi.
+                ℹ️ <strong>Tanpa API Key:</strong> AI tetap berfungsi 100% menggunakan <strong>AI Finansial bawaan</strong> untuk menjawab sapaan, panduan fitur, serta menganalisis saldo, piutang, utang, omset, dan laba rugi secara otomatis.
               </div>
 
               <div className="flex justify-end gap-2 pt-2">
                 <button
                   type="button"
                   onClick={() => setIsSettingsOpen(false)}
-                  className="px-4 py-2 rounded-xl border border-slate-200 text-xs font-semibold text-slate-600 hover:bg-slate-50"
+                  className="px-4 py-2 rounded-xl border border-slate-200 text-xs font-semibold text-slate-600 hover:bg-slate-50 cursor-pointer"
                 >
                   Batal
                 </button>
                 <button
                   type="button"
                   onClick={handleSaveApiKey}
-                  className="px-4 py-2 rounded-xl bg-blue-600 text-white text-xs font-semibold hover:bg-blue-700 shadow-xs"
+                  className="px-4 py-2 rounded-xl bg-blue-600 text-white text-xs font-semibold hover:bg-blue-700 shadow-xs cursor-pointer"
                 >
                   Simpan Pengaturan
                 </button>
