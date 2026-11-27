@@ -37,16 +37,9 @@ export default function AiAsisten() {
   } = useAppContext();
   const { user } = useAuth();
 
-  // Gemini API Key state (Pre-configured with real Google Gemini 3.8 Flash)
-  const getPreconfiguredKey = () => {
-    try {
-      return atob('QVEuQWI4Uk42TGF1b09mbnZSREhqX3hzLXAyaWxGZFYxaC10b3FIaVhzMllQdnlCazhIaWc=');
-    } catch {
-      return '';
-    }
-  };
+  // Gemini API Key state: strictly loaded from user storage or environment variable
   const [apiKey, setApiKey] = useState(() => {
-    return localStorage.getItem('asia_plastic_gemini_key') || import.meta.env.VITE_GEMINI_API_KEY || getPreconfiguredKey();
+    return localStorage.getItem('asia_plastic_gemini_key') || import.meta.env.VITE_GEMINI_API_KEY || '';
   });
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [tempApiKey, setTempApiKey] = useState(apiKey);
