@@ -43,6 +43,8 @@ export default function AiAsisten() {
   });
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [tempApiKey, setTempApiKey] = useState(apiKey);
+  const [isTestingKey, setIsTestingKey] = useState(false);
+  const [testKeyError, setTestKeyError] = useState('');
   const [copiedIndex, setCopiedIndex] = useState(null);
 
   // Chat messages
@@ -227,7 +229,7 @@ export default function AiAsisten() {
     return `Saya memahami Anda menanyakan perihal *"${query}"*.\n\nSebagai AI Asisten Finansial terintegrasi, saya siap membantu Anda menganalisis seluruh pembukuan Asia Plastik.\n\n**Data Ringkas Saat Ini:**\n- 💰 **Kas & Bank:** ${formatRupiah(financialSummary.totalCash)}\n- 📈 **Penjualan Lunas:** ${formatRupiah(financialSummary.totalIncomePaid)}\n- ⏳ **Piutang Berjalan:** ${formatRupiah(financialSummary.totalPiutang)}\n- 📋 **Utang Supplier:** ${formatRupiah(financialSummary.totalUtang)}\n\n💡 *Anda bisa mencoba mengklik salah satu tombol cepat di atas (seperti **Arus Kas & Laba**, **Piutang Belum Lunas**, atau **Cek Saldo Bank**). Jika Anda ingin berdiskusi bebas atau tanya jawab strategis kompleks layaknya ChatGPT, Anda juga bisa memasukkan Google Gemini API Key di tombol pojok kanan atas!*`;
   };
 
-  // Google Gemini API Caller
+  // Google Gemini API Caller (Multi-Turn Generative AI)
   const callGeminiApi = async (userPrompt) => {
     const cleanKey = apiKey.trim();
     if (!cleanKey) {
@@ -235,53 +237,68 @@ export default function AiAsisten() {
     }
 
     const systemPrompt = `Anda adalah CFO Virtual dan AI Asisten Finansial Senior untuk PT Asia Plastik Indonesia (pabrik manufaktur plastik dan kemasan packaging).
-Anda memiliki akses ke data operasional riil terkini perusahaan:
+Anda terhubung langsung ke data operasional riil terkini perusahaan:
 ${JSON.stringify(financialSummary, null, 2)}
 
 Petunjuk Menjawab:
-1. Jawab selalu dalam Bahasa Indonesia yang ramah, profesional, cerdas, dan solutif.
-2. Jika pengguna menyapa (seperti halo, hai, apa kabar), balas dengan sapaan hangat yang sopan.
-3. Gunakan angka riil dari data di atas jika relevan, format dalam format Rupiah (misal Rp 15.000.000).
-4. Berikan saran bisnis/akuntansi yang strategis, efisien, dan dapat langsung dieksekusi.
-5. Gunakan poin-poin tebal (bold) untuk kemudahan membaca.`;
+1. Jawab selalu dalam Bahasa Indonesia yang ramah, profesional, cerdas, dan interaktif seperti ChatGPT/Gemini.
+2. Jawab pertanyaan pengguna secara kontekstual. Jika menyapa (halo/hai), balas dengan hangat dan tanyakan hal spesifik yang ingin dibahas.
+3. Gunakan data finansial di atas jika relevan dengan format Rupiah (contoh: Rp 15.000.000). Jika data masih Rp 0, jelaskan dengan ramah bahwa pembukuan baru dimulai.
+4. Anda dapat membantu pembuatan draf surat penagihan invoice, analisis efisiensi biaya pabrik, kalkulasi laba rugi, simulasi kas, hingga konsultasi strategi bisnis.
+5. Gunakan format markdown tebal (bold) dan poin-poin agar nyaman dibaca.`;
 
-    try {
-      const response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${cleanKey}`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            contents: [
-              {
-                role: 'user',
-                parts: [{ text: `${systemPrompt}\n\nPertanyaan Pengguna: ${userPrompt}` }]
+    // Multi-turn history
+    const pastTurns = messages.slice(-6).map(m => ({
+      role: m.role === 'assistant' ? 'model' : 'user',
+      parts: [{ text: m.text }]
+    }));
+
+    const contents = [
+      ...pastTurns,
+      {
+        role: 'user',
+        parts: [{ text: userPrompt }]
+      }
+    ];
+
+    const models = ['gemini-1.5-flash', 'gemini-2.0-flash', 'gemini-1.5-pro'];
+    let lastError = null;
+
+    for (const modelName of models) {
+      try {
+        const response = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${cleanKey}`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              systemInstruction: {
+                parts: [{ text: systemPrompt }]
+              },
+              contents,
+              generationConfig: {
+                temperature: 0.7,
+                maxOutputTokens: 1500
               }
-            ],
-            generationConfig: {
-              temperature: 0.3,
-              maxOutputTokens: 1000
-            }
-          })
+            })
+          }
+        );
+
+        if (response.ok) {
+          const data = await response.json();
+          const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+          if (text) return text;
+        } else {
+          const errData = await response.json().catch(() => ({}));
+          lastError = errData?.error?.message || response.statusText;
         }
-      );
-
-      if (!response.ok) {
-        const errJson = await response.json().catch(() => ({}));
-        console.warn('[Gemini API Error]', errJson);
-        return `${generateLocalAnswer(userPrompt)}\n\n*(Catatan: Panggilan Gemini API mengalami kendala: ${errJson?.error?.message || response.statusText}. Respon di atas dijawab otomatis oleh Smart Financial Engine).*`;
+      } catch (err) {
+        lastError = err.message;
       }
-
-      const data = await response.json();
-      const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-      if (text) {
-        return text;
-      }
-      return generateLocalAnswer(userPrompt);
-    } catch (err) {
-      console.warn('[Gemini fetch error]', err);
-      return generateLocalAnswer(userPrompt);
     }
+
+    console.warn('[Gemini Call Failed]', lastError);
+    return `${generateLocalAnswer(userPrompt)}\n\n*(Catatan: Panggilan Google Gemini API gagal: ${lastError || 'Kendala koneksi'}. Pastikan API Key dibuat di Google AI Studio (aistudio.google.com/app/apikey). Jawaban di atas dijawab oleh AI Finansial bawaan).*`;
   };
 
   // Submit Handler
@@ -342,12 +359,38 @@ Petunjuk Menjawab:
     notify('Percakapan telah di-reset.');
   };
 
-  const handleSaveApiKey = () => {
+  const handleSaveApiKey = async () => {
     const clean = tempApiKey.trim();
-    setApiKey(clean);
-    localStorage.setItem('asia_plastic_gemini_key', clean);
-    setIsSettingsOpen(false);
-    notify(clean ? 'Gemini API Key tersimpan! AI Generatif aktif.' : 'API Key dihapus. Beralih ke AI Finansial bawaan.');
+    if (!clean) {
+      setApiKey('');
+      localStorage.removeItem('asia_plastic_gemini_key');
+      setIsSettingsOpen(false);
+      setTestKeyError('');
+      notify('API Key dihapus. Beralih ke AI Finansial bawaan.');
+      return;
+    }
+
+    setIsTestingKey(true);
+    setTestKeyError('');
+    try {
+      const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${clean}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ contents: [{ role: 'user', parts: [{ text: 'ping' }] }] })
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err?.error?.message || `Kode respon Google: ${res.statusText}`);
+      }
+      setApiKey(clean);
+      localStorage.setItem('asia_plastic_gemini_key', clean);
+      setIsSettingsOpen(false);
+      notify('Gemini API Key valid & aktif! Mode Generatif interaktif siap digunakan.');
+    } catch (err) {
+      setTestKeyError(`Koneksi key gagal: ${err.message}. Pastikan key dibuat melalui Google AI Studio (aistudio.google.com/app/apikey).`);
+    } finally {
+      setIsTestingKey(false);
+    }
   };
 
   // Quick prompt chips
@@ -399,6 +442,33 @@ Petunjuk Menjawab:
           </button>
         </div>
       </div>
+
+      {/* Banner Rekomendasi Mode AI Interaktif */}
+      {!apiKey && (
+        <div className="p-3.5 rounded-2xl bg-gradient-to-r from-blue-50 via-indigo-50 to-sky-50 border border-blue-200/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs">
+          <div className="flex items-center gap-3">
+            <div className="h-9 w-9 rounded-xl bg-blue-600 text-white flex items-center justify-center shrink-0 shadow-sm">
+              <Sparkles className="h-4 w-4" />
+            </div>
+            <div>
+              <p className="text-xs font-bold text-slate-800">
+                Aktifkan AI Generatif Interaktif (Google Gemini 1.5 / 2.0 Flash)
+              </p>
+              <p className="text-[11px] text-slate-500">
+                Hubungkan API Key gratis dari Google AI Studio untuk percakapan bebas tanpa batas, analisis strategi, dan draf surat resmi.
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => setIsSettingsOpen(true)}
+            className="inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl bg-blue-600 text-white text-xs font-semibold hover:bg-blue-700 transition-colors shadow-2xs shrink-0 cursor-pointer"
+          >
+            <Key className="h-3.5 w-3.5" />
+            <span>Pasang Key Gratis</span>
+          </button>
+        </div>
+      )}
 
       {/* Main Chat Container */}
       <div className="rounded-3xl border border-slate-200/90 bg-white shadow-sm flex flex-col h-[640px] overflow-hidden">
@@ -531,33 +601,60 @@ Petunjuk Menjawab:
                 <input
                   type="password"
                   value={tempApiKey}
-                  onChange={(e) => setTempApiKey(e.target.value)}
+                  onChange={(e) => {
+                    setTempApiKey(e.target.value);
+                    setTestKeyError('');
+                  }}
                   placeholder="AIzaSy..."
                   className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-mono focus:border-blue-500 focus:outline-none"
                 />
-                <span className="text-[10px] text-slate-400 mt-1 block">
-                  Belum punya key? Dapatkan gratis dalam 1 menit di <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noreferrer" className="text-blue-600 hover:underline">Google AI Studio ↗</a>.
-                </span>
+                <div className="mt-1.5 flex items-center justify-between text-[11px]">
+                  <a
+                    href="https://aistudio.google.com/app/apikey"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-1 text-blue-600 font-semibold hover:underline"
+                  >
+                    <span>Dapatkan Key Gratis di Google AI Studio</span>
+                    <ExternalLink className="h-3 w-3" />
+                  </a>
+                </div>
               </div>
 
+              {testKeyError && (
+                <div className="rounded-2xl border border-rose-200 bg-rose-50 p-3 text-xs text-rose-700 flex items-start gap-2">
+                  <AlertTriangle className="h-4 w-4 shrink-0 text-rose-600 mt-0.5" />
+                  <span className="leading-relaxed">{testKeyError}</span>
+                </div>
+              )}
+
               <div className="rounded-2xl border border-blue-100 bg-blue-50/60 p-3 text-xs text-blue-800 leading-relaxed">
-                ℹ️ <strong>Tanpa API Key:</strong> AI tetap berfungsi 100% menggunakan <strong>AI Finansial bawaan</strong> untuk menjawab sapaan, panduan fitur, serta menganalisis saldo, piutang, utang, omset, dan laba rugi secara otomatis.
+                ℹ️ <strong>Tanpa API Key:</strong> AI tetap berfungsi menggunakan <strong>AI Finansial bawaan</strong> untuk menjawab panduan alur, serta menghitung saldo, piutang, utang, omset, dan laba rugi.
               </div>
 
               <div className="flex justify-end gap-2 pt-2">
                 <button
                   type="button"
+                  disabled={isTestingKey}
                   onClick={() => setIsSettingsOpen(false)}
-                  className="px-4 py-2 rounded-xl border border-slate-200 text-xs font-semibold text-slate-600 hover:bg-slate-50 cursor-pointer"
+                  className="px-4 py-2 rounded-xl border border-slate-200 text-xs font-semibold text-slate-600 hover:bg-slate-50 cursor-pointer disabled:opacity-50"
                 >
                   Batal
                 </button>
                 <button
                   type="button"
+                  disabled={isTestingKey}
                   onClick={handleSaveApiKey}
-                  className="px-4 py-2 rounded-xl bg-blue-600 text-white text-xs font-semibold hover:bg-blue-700 shadow-xs cursor-pointer"
+                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-blue-600 text-white text-xs font-semibold hover:bg-blue-700 shadow-xs cursor-pointer disabled:opacity-50"
                 >
-                  Simpan Pengaturan
+                  {isTestingKey ? (
+                    <>
+                      <RefreshCw className="h-3.5 w-3.5 animate-spin" />
+                      <span>Menguji Key...</span>
+                    </>
+                  ) : (
+                    <span>Uji &amp; Simpan Key</span>
+                  )}
                 </button>
               </div>
             </div>
