@@ -296,17 +296,46 @@ export function AuthProvider({ children }) {
       return { ok: false, error: 'Silakan masukkan alamat email.' };
     }
 
-    // Attempt Firebase Email Auth or seamless fallback to workspace Owner
+    // Legitimate Firebase Email & Password Authentication
     try {
-      const res = await signInWithEmailAndPassword(auth, cleanEmail, password || 'password123');
-      const isOwner = cleanEmail === OWNER_EMAIL || cleanEmail.includes('admin') || cleanEmail.includes('owner');
+      const res = await signInWithEmailAndPassword(auth, cleanEmail, password);
+      const sanitizedKey = cleanEmail.replace(/[.#$\[\]\/]/g, ',');
+      
+      let userRole = 'Finance Manager';
+      let userName = res.user.displayName || cleanEmail.split('@')[0];
+      let userRecord = {};
+
+      try {
+        const snap = await get(ref(rtdb, `authorized_users/${sanitizedKey}`));
+        if (snap.exists()) {
+          userRecord = snap.val() || {};
+          if (userRecord.active === false) {
+            await signOut(auth).catch(() => {});
+            setUser(null);
+            const err = `Akses dinonaktifkan: Akun ${res.user.email} dinonaktifkan oleh administrator.`;
+            setLoginError(err);
+            setLoading(false);
+            return { ok: false, error: err };
+          }
+          userRole = userRecord.role || userRole;
+          userName = userRecord.name || userName;
+        } else if (cleanEmail === OWNER_EMAIL || cleanEmail.includes('owner') || cleanEmail.includes('admin')) {
+          userRole = 'Owner';
+        }
+      } catch (dbErr) {
+        if (cleanEmail === OWNER_EMAIL) userRole = 'Owner';
+      }
+
       const loggedUser = {
         ...DEFAULT_USER,
         uid: res.user.uid,
         email: res.user.email,
-        displayName: res.user.displayName || cleanEmail.split('@')[0],
-        role: isOwner ? 'Owner' : 'Finance Manager'
+        displayName: userName,
+        name: userName,
+        role: userRole,
+        ...userRecord
       };
+
       setUser(loggedUser);
       if (rememberMe) {
         localStorage.setItem('ap_current_user', JSON.stringify(loggedUser));
@@ -316,24 +345,22 @@ export function AuthProvider({ children }) {
       setLoading(false);
       return { ok: true };
     } catch (fbErr) {
-      // Direct access fallback for user's workspace
-      const isOwner = true;
-      const newUser = {
-        ...DEFAULT_USER,
-        uid: `usr-${cleanEmail.replace(/[^a-z0-9]/g, '') || 'owner'}`,
-        email: cleanEmail,
-        displayName: cleanEmail.split('@')[0] || 'Carlos Susanto',
-        name: cleanEmail.split('@')[0] || 'Carlos Susanto',
-        role: 'Owner'
-      };
-      setUser(newUser);
-      if (rememberMe) {
-        localStorage.setItem('ap_current_user', JSON.stringify(newUser));
-      } else {
-        sessionStorage.setItem('ap_current_user', JSON.stringify(newUser));
+      const code = fbErr?.code || '';
+      let msg = 'Gagal masuk. Silakan periksa kembali email dan kata sandi Anda.';
+      if (code === 'auth/invalid-credential' || code === 'auth/wrong-password') {
+        msg = 'Email atau kata sandi yang Anda masukkan salah.';
+      } else if (code === 'auth/user-not-found') {
+        msg = 'Akun dengan email ini belum terdaftar di Firebase.';
+      } else if (code === 'auth/invalid-email') {
+        msg = 'Format alamat email tidak valid.';
+      } else if (code === 'auth/too-many-requests') {
+        msg = 'Terlalu banyak percobaan gagal. Silakan tunggu beberapa saat atau gunakan Google Sign-In.';
+      } else if (fbErr?.message) {
+        msg = fbErr.message;
       }
+      setLoginError(msg);
       setLoading(false);
-      return { ok: true };
+      return { ok: false, error: msg };
     }
   };
 

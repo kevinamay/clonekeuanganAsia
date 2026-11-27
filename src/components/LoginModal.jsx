@@ -163,7 +163,7 @@ export default function LoginModal() {
                 type="button"
                 disabled={loading}
                 onClick={handleGoogle}
-                className="flex w-full items-center justify-center gap-2.5 rounded-full border border-slate-200 bg-white py-2.5 text-xs font-semibold text-slate-800 transition-all hover:bg-slate-50 hover:border-slate-300 active:scale-[0.99] disabled:opacity-60"
+                className="flex w-full items-center justify-center gap-2.5 rounded-full border border-slate-200 bg-white py-2.5 text-xs font-semibold text-slate-800 transition-all hover:bg-slate-50 hover:border-slate-300 active:scale-[0.99] disabled:opacity-60 cursor-pointer"
               >
                 <svg viewBox="0 0 24 24" className="h-4 w-4" aria-hidden="true">
                   <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17Z" />
@@ -173,16 +173,6 @@ export default function LoginModal() {
                 </svg>
                 <span>{loading ? "Menghubungkan..." : "Masuk dengan Google"}</span>
               </button>
-
-              <div className="mt-3.5 pt-2 text-center">
-                <button
-                  type="button"
-                  onClick={() => signInWithEmail('carlossusanto89@gmail.com', 'password123', rememberMe)}
-                  className="text-[11px] font-semibold text-blue-600 hover:text-blue-700 hover:underline cursor-pointer"
-                >
-                  ⚡ Masuk Langsung sebagai Owner (Akses Cepat)
-                </button>
-              </div>
             </div>
           </div>
         </div>
