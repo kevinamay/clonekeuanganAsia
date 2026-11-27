@@ -268,14 +268,17 @@ Petunjuk Menjawab:
       }
     ];
 
-    const models = ['gemini-3.8-flash', 'gemini-flash-latest', 'gemini-3.5-flash', 'gemini-2.5-flash-lite'];
+    const models = ['gemini-3.5-flash-lite', 'gemini-3.5-flash'];
     let lastError = null;
 
     for (const modelName of models) {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 6000);
       try {
         const response = await fetch(
           `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${cleanKey}`,
           {
+            signal: controller.signal,
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -285,11 +288,12 @@ Petunjuk Menjawab:
               contents,
               generationConfig: {
                 temperature: 0.7,
-                maxOutputTokens: 1500
+                maxOutputTokens: 1200
               }
             })
           }
         );
+        clearTimeout(timeoutId);
 
         if (response.ok) {
           const data = await response.json();
@@ -300,7 +304,8 @@ Petunjuk Menjawab:
           lastError = errData?.error?.message || response.statusText;
         }
       } catch (err) {
-        lastError = err.message;
+        clearTimeout(timeoutId);
+        lastError = err.name === 'AbortError' ? 'Waktu request habis (timeout)' : err.message;
       }
     }
 
@@ -380,7 +385,7 @@ Petunjuk Menjawab:
     setIsTestingKey(true);
     setTestKeyError('');
     try {
-      const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=${clean}`, {
+      const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent?key=${clean}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ contents: [{ role: 'user', parts: [{ text: 'ping' }] }] })
@@ -421,7 +426,7 @@ Petunjuk Menjawab:
               apiKey ? 'bg-indigo-50 text-indigo-700 border border-indigo-200' : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
             }`}>
               <Sparkles className="h-3 w-3" />
-              <span>{apiKey ? 'Google Gemini 3.8 Flash Aktif' : 'AI Finansial Aktif'}</span>
+              <span>{apiKey ? 'Gemini 3.5 Flash-Lite (Super Cepat)' : 'AI Finansial Aktif'}</span>
             </span>
           </div>
           <p className="mt-1 text-xs text-slate-500">
