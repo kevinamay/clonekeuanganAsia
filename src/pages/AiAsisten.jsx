@@ -37,12 +37,10 @@ export default function AiAsisten() {
   } = useAppContext();
   const { user } = useAuth();
 
-  // Nama pengguna aktif yang sedang login (dinamis sesuai akun login, bukan hardcoded)
   const currentUserName = useMemo(() => {
     return user?.displayName || user?.name || (user?.email ? user.email.split('@')[0] : 'Rekan Finansial');
   }, [user]);
 
-  // Gemini API Key state: strictly loaded from user storage or environment variable
   const [apiKey, setApiKey] = useState(() => {
     return localStorage.getItem('asia_plastic_gemini_key') || import.meta.env.VITE_GEMINI_API_KEY || '';
   });
@@ -52,7 +50,6 @@ export default function AiAsisten() {
   const [testKeyError, setTestKeyError] = useState('');
   const [copiedIndex, setCopiedIndex] = useState(null);
 
-  // Chat messages
   const [messages, setMessages] = useState(() => {
     try {
       const saved = sessionStorage.getItem('ap_ai_chat_history');
@@ -69,7 +66,6 @@ export default function AiAsisten() {
     ];
   });
 
-  // Sinkronkan sapaan awal jika akun login baru termuat/berubah
   useEffect(() => {
     setMessages((prev) => {
       if (prev.length === 1 && prev[0].id === 'msg-0') {
@@ -266,7 +262,7 @@ ${JSON.stringify(financialSummary, null, 2)}
 Aturan Penting Gaya Bicara & Respon:
 1. Jawab langsung ke inti apa yang ditanyakan pengguna secara alami, luwes, dan to-the-point seperti manusia mengobrol normal (jangan kaku seperti robot).
 2. DILARANG KERAS menempelkan daftar menu template/pilihan bantuan (seperti "Berikut hal yang bisa kita kerjakan: * Pencatatan Awal... * Draf Dokumen... * Analisis Biaya Pabrik...") di akhir setiap pesan. Jangan pernah mengulang-ulang daftar kapabilitas Anda di setiap jawaban!
-3. Jika pengguna menyapa (seperti "halo", "hai", "selamat pagi", "apa kabar"), balas sapaan dengan ramah dan panggil nama pengguna yang sedang aktif ("${currentUserName}"). DILARANG memanggil nama lain seperti Carlos jika nama pengguna yang sedang aktif bukan Carlos!
+3. Jika pengguna menyapa (seperti "halo", "hai", "selamat pagi", "apa kabar"), balas sapaan dengan ramah dan sebut nama "${currentUserName}".
 4. Gunakan data finansial di atas jika relevan dalam format Rupiah (contoh: Rp 15.000.000). Jika data masih Rp 0, jelaskan secara santai bahwa transaksi belum mulai diinput.
 5. Hanya berikan rincian panjang atau poin-poin jika memang diminta secara spesifik oleh pengguna.`;
 
