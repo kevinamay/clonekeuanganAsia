@@ -37,6 +37,11 @@ export default function AiAsisten() {
   } = useAppContext();
   const { user } = useAuth();
 
+  // Nama pengguna aktif yang sedang login (dinamis sesuai akun login, bukan hardcoded)
+  const currentUserName = useMemo(() => {
+    return user?.displayName || user?.name || (user?.email ? user.email.split('@')[0] : 'Rekan Finansial');
+  }, [user]);
+
   // Gemini API Key state: strictly loaded from user storage or environment variable
   const [apiKey, setApiKey] = useState(() => {
     return localStorage.getItem('asia_plastic_gemini_key') || import.meta.env.VITE_GEMINI_API_KEY || '';
@@ -53,15 +58,31 @@ export default function AiAsisten() {
       const saved = sessionStorage.getItem('ap_ai_chat_history');
       if (saved) return JSON.parse(saved);
     } catch {}
+    const initialName = user?.displayName || user?.name || (user?.email ? user.email.split('@')[0] : 'Rekan Finansial');
     return [
       {
         id: 'msg-0',
         role: 'assistant',
-        text: `Halo ${user?.displayName || 'Rekan Finansial'}! 👋 Saya AI Asisten Finansial Asia Plastik.\n\nSaya terhubung langsung secara real-time dengan seluruh pembukuan Anda: rekening bank, faktur penjualan, tagihan pembelian bahan baku, serta pengeluaran pabrik.\n\nAda yang bisa saya bantu atau analisis hari ini? Anda bisa langsung mengetik pertanyaan atau memilih salah satu tombol cepat di bawah!`,
+        text: `Halo ${initialName}! 👋 Saya AI Asisten Finansial Asia Plastik.\n\nSaya terhubung langsung secara real-time dengan seluruh pembukuan Anda: rekening bank, faktur penjualan, tagihan pembelian bahan baku, serta pengeluaran pabrik.\n\nAda yang bisa saya bantu atau analisis hari ini? Anda bisa langsung mengetik pertanyaan atau memilih salah satu tombol cepat di bawah!`,
         timestamp: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })
       }
     ];
   });
+
+  // Sinkronkan sapaan awal jika akun login baru termuat/berubah
+  useEffect(() => {
+    setMessages((prev) => {
+      if (prev.length === 1 && prev[0].id === 'msg-0') {
+        return [
+          {
+            ...prev[0],
+            text: `Halo ${currentUserName}! 👋 Saya AI Asisten Finansial Asia Plastik.\n\nSaya terhubung langsung secara real-time dengan seluruh pembukuan Anda: rekening bank, faktur penjualan, tagihan pembelian bahan baku, serta pengeluaran pabrik.\n\nAda yang bisa saya bantu atau analisis hari ini? Anda bisa langsung mengetik pertanyaan atau memilih salah satu tombol cepat di bawah!`
+          }
+        ];
+      }
+      return prev;
+    });
+  }, [currentUserName]);
 
   const [input, setInput] = useState('');
   const [isThinking, setIsThinking] = useState(false);
@@ -125,7 +146,7 @@ export default function AiAsisten() {
     // 1. Sapaan & Salam Santai (Greetings)
     const greetingWords = ['halo', 'hai', 'hi', 'hey', 'helo', 'hello', 'pagi', 'siang', 'sore', 'malam', 'assalamu', 'tes', 'test', 'ping', 'apa kabar'];
     if (greetingWords.some(w => q === w || q.startsWith(w + ' ') || q.endsWith(' ' + w) || q.includes(' ' + w + ' '))) {
-      return `Halo ${user?.displayName || 'Rekan Finansial'}! 👋\n\nSenang menyapa Anda. Saya AI Asisten Finansial Asia Plastik. Ada yang bisa saya bantu atau analisis untuk operasional hari ini?\n\nAnda bisa menanyakan hal-hal seperti:\n- 💰 **Kas & Bank**: mengecek saldo rekening dan likuiditas\n- 📈 **Penjualan**: memantau omset dan piutang pelanggan\n- 🏢 **Utang & Vendor**: mengecek tagihan pembelian bahan baku\n- 📊 **Arus Kas**: memonitor laba bersih dan pengeluaran\n- ❓ **Panduan Fitur**: cara membuat faktur, input kas, atau rekonsiliasi\n\nSilakan tanyakan apa saja atau pilih tombol cepat di bawah!`;
+      return `Halo ${currentUserName}! 👋\n\nSenang menyapa Anda. Saya AI Asisten Finansial Asia Plastik. Ada yang bisa saya bantu atau analisis untuk operasional hari ini?\n\nAnda bisa menanyakan hal-hal seperti:\n- 💰 **Kas & Bank**: mengecek saldo rekening dan likuiditas\n- 📈 **Penjualan**: memantau omset dan piutang pelanggan\n- 🏢 **Utang & Vendor**: mengecek tagihan pembelian bahan baku\n- 📊 **Arus Kas**: memonitor laba bersih dan pengeluaran\n- ❓ **Panduan Fitur**: cara membuat faktur, input kas, atau rekonsiliasi\n\nSilakan tanyakan apa saja atau pilih tombol cepat di bawah!`;
     }
 
     // 2. Ucapan Terima Kasih & Konfirmasi
@@ -237,13 +258,15 @@ export default function AiAsisten() {
     }
 
     const systemPrompt = `Anda adalah CFO Virtual dan AI Asisten Finansial untuk PT Asia Plastik Indonesia (pabrik manufaktur plastik dan kemasan packaging).
+Pengguna yang saat ini sedang aktif mengobrol bersama Anda bernama: "${currentUserName}".
+
 Data ringkasan keuangan riil perusahaan terkini:
 ${JSON.stringify(financialSummary, null, 2)}
 
 Aturan Penting Gaya Bicara & Respon:
 1. Jawab langsung ke inti apa yang ditanyakan pengguna secara alami, luwes, dan to-the-point seperti manusia mengobrol normal (jangan kaku seperti robot).
 2. DILARANG KERAS menempelkan daftar menu template/pilihan bantuan (seperti "Berikut hal yang bisa kita kerjakan: * Pencatatan Awal... * Draf Dokumen... * Analisis Biaya Pabrik...") di akhir setiap pesan. Jangan pernah mengulang-ulang daftar kapabilitas Anda di setiap jawaban!
-3. Jika pengguna menyapa (seperti "halo", "hai", "selamat pagi", "apa kabar"), cukup balas sapaan dengan ramah dan singkat (1-2 kalimat), misalnya: "Halo Carlos! Senang bisa menyapa Anda. Ada yang ingin kita diskusikan atau analisis terkait keuangan dan operasional Asia Plastik hari ini?"
+3. Jika pengguna menyapa (seperti "halo", "hai", "selamat pagi", "apa kabar"), balas sapaan dengan ramah dan panggil nama pengguna yang sedang aktif ("${currentUserName}"). DILARANG memanggil nama lain seperti Carlos jika nama pengguna yang sedang aktif bukan Carlos!
 4. Gunakan data finansial di atas jika relevan dalam format Rupiah (contoh: Rp 15.000.000). Jika data masih Rp 0, jelaskan secara santai bahwa transaksi belum mulai diinput.
 5. Hanya berikan rincian panjang atau poin-poin jika memang diminta secara spesifik oleh pengguna.`;
 
